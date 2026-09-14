@@ -1,0 +1,18 @@
+[project]
+name = "credit-risk-platform"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pandas>=2.2,<3.0",
+    "numpy>=1.26,<3.0",
+    "scikit-learn>=1.5,<2.0",
+    "matplotlib>=3.9,<4.0",
+    "seaborn>=0.13,<1.0",
+    "psycopg[binary]>=3.2,<4.0",
+]
+[project.optional-dependencies]
+dev = [
+    "jupyterlab>=4.2,<5.0",
+    "pytest>=8.3,<9.0",
+    "ruff>=0.6,<1.0",
+]
