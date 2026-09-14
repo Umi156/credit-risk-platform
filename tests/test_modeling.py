@@ -2,7 +2,12 @@ import pandas as pd
 import pytest
 
 from credit_risk_platform.data_ingestion import load_raw_dataset
-from credit_risk_platform.modeling import split_model_data
+from credit_risk_platform.modeling import (
+    build_model_pipelines,
+    build_preprocessor,
+    cross_validate_models,
+    split_model_data,
+)
 from credit_risk_platform.preprocessing import preprocess_dataset
 
 
@@ -80,3 +85,122 @@ def test_train_and_test_are_disjoint(model_dataset):
     X_train, X_test, _, _ = split_model_data(model_dataset)
 
     assert set(X_train.index).isdisjoint(X_test.index)
+
+
+def test_preprocessor_fits_training_data(model_dataset):
+    """
+    Verify that the preprocessor can be fitted on training predictors.
+    Prüft, ob der Preprocessor auf den Trainingsmerkmalen gefittet werden kann.
+    """
+    X_train, _, _, _ = split_model_data(model_dataset)
+    preprocessor = build_preprocessor()
+
+    # Fit transformations exclusively on training data to prevent data leakage.
+    # Fittet Transformationen ausschließlich auf Trainingsdaten, um Data Leakage zu vermeiden.
+    transformed = preprocessor.fit_transform(X_train)
+
+    assert transformed.shape[0] == len(X_train)
+
+
+def test_preprocessor_covers_all_predictors(model_dataset):
+    """
+    Verify that every predictor belongs to exactly one feature group.
+    Prüft, ob jedes Modellmerkmal genau einer Feature-Gruppe zugeordnet ist.
+    """
+    X_train, _, _, _ = split_model_data(model_dataset)
+
+    # Access the feature definitions used by the modeling pipeline.
+    # Greift auf die Feature-Definitionen der Modell-Pipeline zu.
+    from credit_risk_platform.modeling import (
+        CATEGORICAL_FEATURES,
+        NUMERICAL_FEATURES,
+        PAYMENT_STATUS_FEATURES,
+    )
+
+    configured_features = (
+        CATEGORICAL_FEATURES
+        + NUMERICAL_FEATURES
+        + PAYMENT_STATUS_FEATURES
+    )
+
+    # Detect accidental duplicate assignments between feature groups.
+    # Erkennt versehentliche doppelte Zuordnungen zwischen Feature-Gruppen.
+    assert len(configured_features) == len(set(configured_features))
+
+    # Ensure that no predictor is silently omitted from preprocessing.
+    # Stellt sicher, dass kein Prädiktor unbemerkt vom Preprocessing ausgeschlossen wird.
+    assert set(configured_features) == set(X_train.columns)
+
+def test_model_pipelines_are_created():
+    """
+    Verify that all intended candidate model pipelines are created.
+    Prüft, ob alle vorgesehenen Kandidaten-Modell-Pipelines erstellt werden.
+    """
+    pipelines = build_model_pipelines()
+
+    # Verify that exactly the three planned candidate models are available.
+    # Prüft, ob genau die drei geplanten Kandidatenmodelle vorhanden sind.
+    assert set(pipelines) == {
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+    }
+
+
+def test_model_pipelines_have_required_steps():
+    """
+    Verify that every model pipeline contains preprocessing and classification.
+    Prüft, ob jede Modell-Pipeline Preprocessing und Klassifikation enthält.
+    """
+    pipelines = build_model_pipelines()
+
+    for pipeline in pipelines.values():
+        # Keep preprocessing inside the pipeline to protect against data leakage.
+        # Behält das Preprocessing innerhalb der Pipeline, um Data Leakage zu vermeiden.
+        assert "preprocessor" in pipeline.named_steps
+        assert "classifier" in pipeline.named_steps
+
+
+def test_model_pipelines_use_independent_preprocessors():
+    """
+    Verify that candidate models do not share the same fitted preprocessor.
+    Prüft, ob Kandidatenmodelle nicht denselben gefitteten Preprocessor gemeinsam verwenden.
+    """
+    pipelines = build_model_pipelines()
+
+    preprocessors = [
+        pipeline.named_steps["preprocessor"]
+        for pipeline in pipelines.values()
+    ]
+
+    # Each pipeline must own a separate transformer instance.
+    # Jede Pipeline muss eine eigene Transformer-Instanz besitzen.
+    assert len({id(preprocessor) for preprocessor in preprocessors}) == 3
+
+
+def test_cross_validation_returns_all_models(model_dataset):
+    """
+    Verify that cross-validation returns results for every candidate model.
+    Prüft, ob die Cross-Validation Ergebnisse für jedes Kandidatenmodell liefert.
+    """
+    X_train, _, y_train, _ = split_model_data(model_dataset)
+
+    # Run model comparison exclusively on the training partition.
+    # Führt den Modellvergleich ausschließlich auf dem Trainingsdatensatz durch.
+    results = cross_validate_models(X_train, y_train)
+
+    # Verify that every configured candidate model appears exactly once.
+    # Prüft, ob jedes konfigurierte Kandidatenmodell genau einmal enthalten ist.
+    assert set(results["model"]) == {
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+    }
+
+    # ROC-AUC must remain within its mathematically valid range.
+    # ROC-AUC muss innerhalb seines mathematisch gültigen Wertebereichs liegen.
+    assert results["mean_roc_auc"].between(0.0, 1.0).all()
+
+    # Standard deviations cannot be negative.
+    # Standardabweichungen können nicht negativ sein.
+    assert (results["std_roc_auc"] >= 0.0).all()
