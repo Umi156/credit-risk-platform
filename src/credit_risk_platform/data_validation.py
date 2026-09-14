@@ -3,7 +3,6 @@ import pandas as pd
 from credit_risk_platform.data_ingestion import load_raw_dataset
 from credit_risk_platform.metrics import default_rate
 
-
 TARGET_COLUMN = "default payment next month"
 
 
