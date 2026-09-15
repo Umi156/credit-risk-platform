@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from credit_risk_platform.modeling import (
@@ -7,6 +8,7 @@ from credit_risk_platform.modeling import (
     split_model_data,
 )
 from credit_risk_platform.visualization import (
+    plot_calibration_method_comparison,
     plot_permutation_importance,
     plot_roc_curves,
 )
@@ -114,3 +116,67 @@ def test_plot_permutation_importance_creates_figure(
     assert output_path == tmp_path / "permutation_importance.png"
     assert output_path.exists()
     assert output_path.stat().st_size > 0
+
+
+def test_plot_calibration_method_comparison_creates_figure(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    """
+    Verify creation of the calibration-method comparison figure.
+    Prüft die Erstellung der Vergleichsgrafik für Kalibrierungsmethoden.
+    """
+    from credit_risk_platform import visualization
+
+    class DummyModel:
+        """
+        Provide a lightweight model placeholder for plotting tests.
+        Stellt einen einfachen Modell-Platzhalter für Plot-Tests bereit.
+        """
+
+    models = {
+        "uncalibrated": DummyModel(),
+        "isotonic": DummyModel(),
+    }
+
+    X_train = pd.DataFrame({"feature": [1, 2, 3, 4]})
+    y_train = pd.Series([0, 1, 0, 1])
+    X_test = pd.DataFrame({"feature": [5, 6, 7, 8]})
+    y_test = pd.Series([0, 1, 0, 1])
+
+    # Avoid real model fitting and return deterministic calibration points.
+    # Vermeidet echtes Modelltraining und liefert deterministische
+    # Kalibrierungspunkte.
+    monkeypatch.setattr(
+        visualization,
+        "calculate_calibration_curve",
+        lambda *args, **kwargs: (
+            np.array([0.2, 0.8]),
+            np.array([0.1, 0.9]),
+        ),
+    )
+
+    # Avoid real metric calculation during this visualization unit test.
+    # Vermeidet echte Metrikberechnung während dieses Visualisierungs-Unit-Tests.
+    monkeypatch.setattr(
+        visualization,
+        "evaluate_model",
+        lambda *args, **kwargs: {"brier_score": 0.14},
+    )
+
+    monkeypatch.setattr(
+        visualization,
+        "FIGURES_DIR",
+        tmp_path,
+    )
+
+    output_path = plot_calibration_method_comparison(
+        models,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+    )
+
+    assert output_path.exists()
+    assert output_path.name == "calibration_method_comparison.png"

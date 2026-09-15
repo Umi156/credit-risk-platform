@@ -2,6 +2,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from credit_risk_platform.calibration import (
+    compare_calibration_methods,
+    evaluate_selected_calibration,
+)
 from credit_risk_platform.data_ingestion import load_raw_dataset
 from credit_risk_platform.evaluation import compare_models_on_holdout
 from credit_risk_platform.explainability import (
@@ -91,6 +95,8 @@ def build_model_evaluation_report(
     holdout: pd.DataFrame,
     thresholds: pd.DataFrame,
     permutation_importance: pd.DataFrame,
+    calibration_cv: pd.DataFrame,
+    calibration_holdout: pd.DataFrame,
     holdout_size: int,
 ) -> str:
     """
@@ -118,6 +124,14 @@ def build_model_evaluation_report(
     # Hält die Explainability-Tabelle kompakt und leitet sie aus den
     # gemessenen Ergebnissen ab.
     top_importance = permutation_importance.head(10)
+
+    uncalibrated = calibration_holdout.loc[
+        calibration_holdout["method"] == "uncalibrated"
+    ].iloc[0]
+
+    isotonic = calibration_holdout.loc[
+        calibration_holdout["method"] == "isotonic"
+    ].iloc[0]
 
     return f"""# Credit Risk Model Evaluation Report
 
@@ -204,25 +218,63 @@ False-Positive-Risk-Flags zu quantifizieren.
 
 ## Probability Calibration / Wahrscheinlichkeitskalibrierung
 
-Calibration evaluates whether predicted default probabilities correspond to
-the default rates actually observed among cases with comparable predicted
-probabilities.
+### FACT / FAKT
 
-Die Kalibrierung bewertet, ob prognostizierte Ausfallwahrscheinlichkeiten den
-tatsächlich beobachteten Default-Raten bei Fällen mit vergleichbaren
-prognostizierten Wahrscheinlichkeiten entsprechen.
+Calibration-method selection was performed using cross-validation on the
+training data:
 
-The Brier Score measures the mean squared error of predicted probabilities.
-Lower Brier Scores indicate lower probability error. Calibration should also
-be inspected graphically because a single summary metric cannot show where
-probability estimates deviate from observed default rates.
+{dataframe_to_markdown_table(calibration_cv)}
 
-Der Brier Score misst den mittleren quadratischen Fehler der prognostizierten
-Wahrscheinlichkeiten. Niedrigere Brier Scores bedeuten einen geringeren
-Wahrscheinlichkeitsfehler. Die Kalibrierung sollte zusätzlich grafisch
-untersucht werden, da eine einzelne Kennzahl nicht zeigt, in welchen
-Wahrscheinlichkeitsbereichen die Prognosen von den beobachteten Default-Raten
-abweichen.
+Isotonic calibration achieved the lowest mean Brier Score in this
+training-data comparison and was therefore selected for subsequent
+holdout evaluation.
+
+Die Auswahl der Kalibrierungsmethode erfolgte mittels Cross-Validation auf den
+Trainingsdaten:
+
+{dataframe_to_markdown_table(calibration_cv)}
+
+Die Isotonic-Kalibrierung erreichte in diesem Trainingsdatenvergleich den
+niedrigsten mittleren Brier Score und wurde deshalb für die anschließende
+Holdout-Evaluation ausgewählt.
+
+The selected method was then compared with the uncalibrated Random Forest on
+the holdout set:
+
+{dataframe_to_markdown_table(calibration_holdout)}
+
+The Brier Score decreased from **{uncalibrated["brier_score"]:.4f}** to
+**{isotonic["brier_score"]:.4f}**, while Log Loss decreased from
+**{uncalibrated["log_loss"]:.4f}** to **{isotonic["log_loss"]:.4f}**.
+
+Der Brier Score sank von **{uncalibrated["brier_score"]:.4f}** auf
+**{isotonic["brier_score"]:.4f}**, während der Log Loss von
+**{uncalibrated["log_loss"]:.4f}** auf **{isotonic["log_loss"]:.4f}** sank.
+
+### INTERPRETATION / INTERPRETATION
+
+The measured results provide evidence of a modest improvement in probability
+quality after isotonic calibration. The calibration curve should be interpreted
+together with Brier Score and Log Loss because deviations remain in individual
+probability ranges.
+
+Die gemessenen Ergebnisse liefern Hinweise auf eine moderate Verbesserung der
+Wahrscheinlichkeitsqualität durch Isotonic Calibration. Die Kalibrierungskurve
+sollte gemeinsam mit Brier Score und Log Loss interpretiert werden, da in
+einzelnen Wahrscheinlichkeitsbereichen weiterhin Abweichungen bestehen.
+
+### LIMITATION / EINSCHRÄNKUNG
+
+Isotonic calibration was selected using training-data cross-validation rather
+than the holdout results. However, the holdout set has already been inspected
+during earlier model evaluation and should not be treated as a new independent
+final test set.
+
+Die Isotonic-Kalibrierung wurde anhand der Cross-Validation auf den
+Trainingsdaten und nicht anhand der Holdout-Ergebnisse ausgewählt. Der
+Holdout-Datensatz wurde jedoch bereits während der vorherigen Modellevaluation
+betrachtet und sollte daher nicht als neuer unabhängiger finaler Testdatensatz
+behandelt werden.
 
 ## Explainability / Erklärbarkeit — Random Forest
 
@@ -288,6 +340,10 @@ unverzerrte Performance-Schätzung zu beanspruchen.
 
 ![Calibration curves](figures/calibration_curves.png)
 
+### Random Forest Calibration Method Comparison
+
+![Random Forest calibration method comparison](figures/calibration_method_comparison.png)
+
 ### Threshold Trade-off / Schwellenwert-Trade-off
 
 ![Threshold trade-off](figures/threshold_tradeoff.png)
@@ -328,7 +384,7 @@ Perspektiven und nicht anhand einer einzigen Klassifikationsmetrik bewertet:
 - Wahrscheinlichkeitsfehler,
 - Kalibrierung,
 - Schwellenwertverhalten
-- und Modellerklärbarkeit.
+- und Modellinterpretierbarkeit.
 
 ### LIMITATION / EINSCHRÄNKUNG
 
@@ -399,11 +455,25 @@ def generate_model_evaluation_report() -> Path:
         y_test,
     )
 
+    calibration_cv = compare_calibration_methods(
+        X_train,
+        y_train,
+    )
+
+    calibration_holdout = evaluate_selected_calibration(
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+    )
+
     report = build_model_evaluation_report(
         cross_validation,
         holdout,
         threshold_results,
         importance_results,
+        calibration_cv,
+        calibration_holdout,
         holdout_size=len(y_test),
     )
 

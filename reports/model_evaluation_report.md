@@ -97,25 +97,74 @@ False-Positive-Risk-Flags zu quantifizieren.
 
 ## Probability Calibration / Wahrscheinlichkeitskalibrierung
 
-Calibration evaluates whether predicted default probabilities correspond to
-the default rates actually observed among cases with comparable predicted
-probabilities.
+### FACT / FAKT
 
-Die Kalibrierung bewertet, ob prognostizierte Ausfallwahrscheinlichkeiten den
-tatsächlich beobachteten Default-Raten bei Fällen mit vergleichbaren
-prognostizierten Wahrscheinlichkeiten entsprechen.
+Calibration-method selection was performed using cross-validation on the
+training data:
 
-The Brier Score measures the mean squared error of predicted probabilities.
-Lower Brier Scores indicate lower probability error. Calibration should also
-be inspected graphically because a single summary metric cannot show where
-probability estimates deviate from observed default rates.
+| method | mean_roc_auc | mean_brier_score | mean_log_loss |
+| --- | --- | --- | --- |
+| isotonic | 0.7736 | 0.1355 | 0.4321 |
+| sigmoid | 0.7741 | 0.1356 | 0.4331 |
+| uncalibrated | 0.7674 | 0.1376 | 0.4405 |
 
-Der Brier Score misst den mittleren quadratischen Fehler der prognostizierten
-Wahrscheinlichkeiten. Niedrigere Brier Scores bedeuten einen geringeren
-Wahrscheinlichkeitsfehler. Die Kalibrierung sollte zusätzlich grafisch
-untersucht werden, da eine einzelne Kennzahl nicht zeigt, in welchen
-Wahrscheinlichkeitsbereichen die Prognosen von den beobachteten Default-Raten
-abweichen.
+Isotonic calibration achieved the lowest mean Brier Score in this
+training-data comparison and was therefore selected for subsequent
+holdout evaluation.
+
+Die Auswahl der Kalibrierungsmethode erfolgte mittels Cross-Validation auf den
+Trainingsdaten:
+
+| method | mean_roc_auc | mean_brier_score | mean_log_loss |
+| --- | --- | --- | --- |
+| isotonic | 0.7736 | 0.1355 | 0.4321 |
+| sigmoid | 0.7741 | 0.1356 | 0.4331 |
+| uncalibrated | 0.7674 | 0.1376 | 0.4405 |
+
+Die Isotonic-Kalibrierung erreichte in diesem Trainingsdatenvergleich den
+niedrigsten mittleren Brier Score und wurde deshalb für die anschließende
+Holdout-Evaluation ausgewählt.
+
+The selected method was then compared with the uncalibrated Random Forest on
+the holdout set:
+
+| method | roc_auc | average_precision | brier_score | log_loss |
+| --- | --- | --- | --- | --- |
+| uncalibrated | 0.7583 | 0.5379 | 0.1391 | 0.4493 |
+| isotonic | 0.7625 | 0.5425 | 0.1375 | 0.4381 |
+
+The Brier Score decreased from **0.1391** to
+**0.1375**, while Log Loss decreased from
+**0.4493** to **0.4381**.
+
+Der Brier Score sank von **0.1391** auf
+**0.1375**, während der Log Loss von
+**0.4493** auf **0.4381** sank.
+
+### INTERPRETATION / INTERPRETATION
+
+The measured results provide evidence of a modest improvement in probability
+quality after isotonic calibration. The calibration curve should be interpreted
+together with Brier Score and Log Loss because deviations remain in individual
+probability ranges.
+
+Die gemessenen Ergebnisse liefern Hinweise auf eine moderate Verbesserung der
+Wahrscheinlichkeitsqualität durch Isotonic Calibration. Die Kalibrierungskurve
+sollte gemeinsam mit Brier Score und Log Loss interpretiert werden, da in
+einzelnen Wahrscheinlichkeitsbereichen weiterhin Abweichungen bestehen.
+
+### LIMITATION / EINSCHRÄNKUNG
+
+Isotonic calibration was selected using training-data cross-validation rather
+than the holdout results. However, the holdout set has already been inspected
+during earlier model evaluation and should not be treated as a new independent
+final test set.
+
+Die Isotonic-Kalibrierung wurde anhand der Cross-Validation auf den
+Trainingsdaten und nicht anhand der Holdout-Ergebnisse ausgewählt. Der
+Holdout-Datensatz wurde jedoch bereits während der vorherigen Modellevaluation
+betrachtet und sollte daher nicht als neuer unabhängiger finaler Testdatensatz
+behandelt werden.
 
 ## Explainability / Erklärbarkeit — Random Forest
 
@@ -192,6 +241,10 @@ unverzerrte Performance-Schätzung zu beanspruchen.
 
 ![Calibration curves](figures/calibration_curves.png)
 
+### Random Forest Calibration Method Comparison
+
+![Random Forest calibration method comparison](figures/calibration_method_comparison.png)
+
 ### Threshold Trade-off / Schwellenwert-Trade-off
 
 ![Threshold trade-off](figures/threshold_tradeoff.png)
@@ -232,7 +285,7 @@ Perspektiven und nicht anhand einer einzigen Klassifikationsmetrik bewertet:
 - Wahrscheinlichkeitsfehler,
 - Kalibrierung,
 - Schwellenwertverhalten
-- und Modellerklärbarkeit.
+- und Modellinterpretierbarkeit.
 
 ### LIMITATION / EINSCHRÄNKUNG
 

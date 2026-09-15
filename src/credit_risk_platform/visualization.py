@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
+from credit_risk_platform.calibration import build_calibrated_models
 from credit_risk_platform.evaluation import (
     calculate_calibration_curve,
     calculate_precision_recall_curve,
@@ -304,6 +305,102 @@ def plot_calibration_curves(
     return output_path
 
 
+def plot_calibration_method_comparison(
+    models: dict,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    n_bins: int = 10,
+) -> Path:
+    """
+    Compare uncalibrated and isotonic Random Forest probability calibration.
+    Vergleicht die Wahrscheinlichkeitskalibrierung des unkalibrierten und
+    isotonic-kalibrierten Random Forest.
+    """
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    for method_name in ["uncalibrated", "isotonic"]:
+        model = models[method_name]
+
+        mean_predicted_probability, observed_default_rate = (
+            calculate_calibration_curve(
+                model,
+                X_train,
+                y_train,
+                X_test,
+                y_test,
+                n_bins=n_bins,
+            )
+        )
+
+        metrics = evaluate_model(
+            model,
+            X_train,
+            y_train,
+            X_test,
+            y_test,
+        )
+
+        display_name = {
+            "uncalibrated": "Random Forest — Uncalibrated",
+            "isotonic": "Random Forest — Isotonic",
+        }[method_name]
+
+        ax.plot(
+            mean_predicted_probability,
+            observed_default_rate,
+            marker="o",
+            label=(
+                f"{display_name} "
+                f"(Brier = {metrics['brier_score']:.3f})"
+            ),
+        )
+
+    # Perfect calibration means predicted PD equals observed default frequency.
+    # Perfekte Kalibrierung bedeutet, dass die prognostizierte PD der
+    # beobachteten Default-Häufigkeit entspricht.
+    ax.plot(
+        [0, 1],
+        [0, 1],
+        linestyle="--",
+        label="Perfect calibration",
+    )
+
+    ax.set_xlabel("Mean predicted PD — Probability of Default")
+    ax.set_ylabel("Observed default rate")
+    ax.set_title(
+        "Random Forest probability calibration on the holdout set\n"
+        "Isotonic was selected using training-data cross-validation"
+    )
+    ax.legend()
+    ax.grid(alpha=0.3)
+
+    # The holdout is used for post-selection evaluation, not method selection.
+    # Der Holdout wird zur Evaluation nach der Auswahl verwendet,
+    # nicht zur Auswahl der Kalibrierungsmethode.
+    ax.text(
+        0.98,
+        0.02,
+        (
+            "Calibration method selected on training CV\n"
+            f"Holdout evaluation: n = {len(y_test):,}"
+        ),
+        transform=ax.transAxes,
+        horizontalalignment="right",
+        verticalalignment="bottom",
+        fontsize=9,
+    )
+
+    output_path = FIGURES_DIR / "calibration_method_comparison.png"
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+    return output_path
+
+
 def plot_threshold_tradeoff(
     model: Pipeline,
     X_train: pd.DataFrame,
@@ -475,6 +572,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = split_model_data(model_dataset)
 
     models = build_model_pipelines()
+    calibrated_models = build_calibrated_models()
 
     roc_path = plot_roc_curves(
         models,
@@ -494,6 +592,14 @@ if __name__ == "__main__":
 
     calibration_path = plot_calibration_curves(
         models,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+    )
+
+    calibration_method_path = plot_calibration_method_comparison(
+        calibrated_models,
         X_train,
         y_train,
         X_test,
@@ -542,4 +648,13 @@ if __name__ == "__main__":
     print(
         "Permutation-Importance-Grafik gespeichert unter: "
         f"{importance_path}"
+    )
+
+    print(
+    "Calibration-method comparison figure saved to: "
+    f"{calibration_method_path}"
+        )
+    print(
+    "Vergleichsgrafik der Kalibrierungsmethoden gespeichert unter: "
+    f"{calibration_method_path}"
     )
