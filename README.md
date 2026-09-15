@@ -7,6 +7,7 @@
 [![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
 [![Tests](https://img.shields.io/badge/tests-54%20passed-brightgreen)](#testing-and-quality)
 [![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
+[![CI](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml)
 
 **Language:** 🇬🇧 [English](README.md) · 🇩🇪 [Deutsch](README_DE.md) · 🇮🇹 [Italiano](README_IT.md)
 
@@ -16,7 +17,7 @@
 
 This portfolio project implements a reproducible machine-learning workflow for **credit default risk modeling** using the UCI *Default of Credit Card Clients* dataset.
 
-It goes beyond model training by covering **data validation, cross-validation, probability calibration, decision-threshold analysis, explainability, MLflow experiment tracking, automated reporting, and software testing**.
+It goes beyond model training by covering **data validation, cross-validation, probability calibration, decision-threshold analysis, explainability, MLflow experiment tracking, automated reporting, software testing, and continuous integration**.
 
 > [!IMPORTANT]
 > **Portfolio scope:** This project demonstrates credit-risk model-development concepts and software-engineering practices. It does **not** claim regulatory, IRBA, or production compliance.
@@ -32,7 +33,7 @@ It goes beyond model training by covering **data validation, cross-validation, p
 | ⚖️ **Decision Analysis** | Threshold trade-offs, precision, recall and false-positive rate |
 | 🔍 **Explainability** | Permutation feature importance |
 | 🧪 **Experiment Tracking** | MLflow with local SQLite backend |
-| 🛠️ **Engineering** | Python package structure, pytest, Ruff, Git/GitHub |
+| 🛠️ **Engineering** | Python package structure, pytest, Ruff, Git/GitHub, GitHub Actions |
 | 📄 **Reporting** | Automated model report and diagnostic visualizations |
 
 ---
@@ -92,6 +93,9 @@ The calibration method was selected using **training-data cross-validation**, wi
                          └─────────────────────────┼─────────────────────┘
                                                    ▼
                                       Reporting & Automated Tests
+                                                   │
+                                                   ▼
+                                      GitHub Actions CI
 ```
 
 ---
@@ -117,6 +121,7 @@ The calibration method was selected using **training-data cross-validation**, wi
 - Automated test suite with 54 tests
 - Ruff static code-quality checks
 - Git/GitHub version control
+- Continuous integration with GitHub Actions
 
 ---
 
@@ -257,9 +262,11 @@ The project uses the **UCI Machine Learning Repository — Default of Credit Car
 | Additional attributes | Demographic variables |
 
 **Dataset source:**
+
 https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients
 
 **DOI:**
+
 https://doi.org/10.24432/C55S3H
 
 The dataset is distributed under the **CC BY 4.0** license.
@@ -294,6 +301,7 @@ This project therefore does **not** claim:
 | Testing | pytest |
 | Code Quality | Ruff |
 | Version Control | Git, GitHub |
+| Continuous Integration | GitHub Actions |
 
 ### Planned Platform Extensions
 
@@ -302,7 +310,6 @@ The following components are planned extensions and are **not yet represented as
 - PostgreSQL for persistent platform data storage
 - Apache Airflow for workflow orchestration
 - Docker / Docker Compose for reproducible services
-- GitHub Actions for continuous integration
 
 ---
 
@@ -310,6 +317,9 @@ The following components are planned extensions and are **not yet represented as
 
 ```text
 credit-risk-platform/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── config/
 ├── data/
 │   ├── raw/
@@ -344,14 +354,18 @@ The current automated test suite contains **54 tests** covering core components 
 - reporting
 - MLflow experiment tracking
 
-Current verified local quality gate:
+Current verified quality gates:
 
 ```text
+Local:
 54 passed
 Ruff: All checks passed
+
+GitHub Actions CI:
+success
 ```
 
-These results correspond to the current verified local quality gate for this project milestone.
+The GitHub Actions workflow reproduces the project quality gate on a fresh Ubuntu runner using Python 3.12, including installation of project dependencies, retrieval of the UCI source dataset, Ruff checks, and the automated pytest suite.
 
 ---
 
@@ -365,9 +379,11 @@ The project currently targets:
 Python >=3.12,<3.13
 ```
 
-The current local development workflow uses an isolated Python virtual environment.
+The local development workflow uses an isolated Python virtual environment.
 
-A complete containerized environment has not yet been implemented. Docker-based reproducibility is part of the planned platform extension.
+Continuous integration is executed on a fresh Ubuntu GitHub Actions runner using Python 3.12.
+
+A complete containerized environment has not yet been implemented. Docker-based reproducibility remains part of the planned platform extension.
 
 ---
 
@@ -385,10 +401,10 @@ A complete containerized environment has not yet been implemented. Docker-based 
 - [x] Automated reporting
 - [x] MLflow experiment tracking
 - [x] Automated tests
+- [x] GitHub Actions CI
 - [ ] PostgreSQL persistence
 - [ ] Apache Airflow orchestration
 - [ ] Docker Compose environment
-- [ ] GitHub Actions CI
 
 ---
 

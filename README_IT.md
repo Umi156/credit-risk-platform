@@ -7,6 +7,7 @@
 [![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
 [![Tests](https://img.shields.io/badge/tests-54%20passed-brightgreen)](#test-e-qualità-del-codice)
 [![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
+[![CI](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml)
 
 **Lingua:** 🇬🇧 [English](README.md) · 🇩🇪 [Deutsch](README_DE.md) · 🇮🇹 [Italiano](README_IT.md)
 
@@ -16,7 +17,7 @@
 
 Questo progetto di portfolio implementa un workflow di machine learning riproducibile per la **modellazione del rischio di default creditizio**, utilizzando il dataset UCI *Default of Credit Card Clients*.
 
-Il progetto va oltre il semplice addestramento del modello e comprende **validazione dei dati, cross-validation, calibrazione delle probabilità, analisi delle soglie decisionali, explainability, experiment tracking con MLflow, reportistica automatizzata e test del software**.
+Il progetto va oltre il semplice addestramento del modello e comprende **validazione dei dati, cross-validation, calibrazione delle probabilità, analisi delle soglie decisionali, explainability, experiment tracking con MLflow, reportistica automatizzata, test del software e Continuous Integration**.
 
 > [!IMPORTANT]
 > **Ambito del portfolio:** questo progetto dimostra concetti di sviluppo di modelli di rischio di credito e pratiche di software engineering. **Non dichiara conformità normativa, conformità IRBA o idoneità alla produzione.**
@@ -32,14 +33,14 @@ Il progetto va oltre il semplice addestramento del modello e comprende **validaz
 | ⚖️ **Analisi decisionale** | Trade-off delle soglie, precision, recall e false-positive rate |
 | 🔍 **Explainability** | Permutation Feature Importance |
 | 🧪 **Experiment Tracking** | MLflow con backend SQLite locale |
-| 🛠️ **Engineering** | Struttura package Python, pytest, Ruff, Git/GitHub |
+| 🛠️ **Engineering** | Struttura package Python, pytest, Ruff, Git/GitHub, GitHub Actions |
 | 📄 **Reporting** | Report automatizzato del modello e visualizzazioni diagnostiche |
 
 ---
 
 ## 🏆 Risultati in sintesi
 
-### Modello selezionato — Random Forest con calibrazione isotonic
+### Modello selezionato — Random Forest con calibrazione Isotonic
 
 | ROC-AUC ↑ | Average Precision ↑ | Brier Score ↓ | Log Loss ↓ |
 | :---: | :---: | :---: | :---: |
@@ -92,6 +93,9 @@ Il metodo di calibrazione è stato selezionato mediante **cross-validation sui d
                          └─────────────────────────┼─────────────────────┘
                                                    ▼
                                       Reporting & Automated Tests
+                                                   │
+                                                   ▼
+                                      GitHub Actions CI
 ```
 
 ---
@@ -117,6 +121,7 @@ Il metodo di calibrazione è stato selezionato mediante **cross-validation sui d
 - Suite automatizzata di 54 test
 - Controlli statici della qualità del codice con Ruff
 - Controllo di versione con Git/GitHub
+- Continuous Integration con GitHub Actions
 
 ---
 
@@ -296,6 +301,7 @@ Questo progetto pertanto **non dichiara**:
 | Testing | pytest |
 | Qualità del codice | Ruff |
 | Controllo di versione | Git, GitHub |
+| Continuous Integration | GitHub Actions |
 
 ### Estensioni della piattaforma pianificate
 
@@ -304,7 +310,6 @@ I seguenti componenti sono estensioni pianificate e **non rappresentano ancora f
 - PostgreSQL per la persistenza dei dati della piattaforma
 - Apache Airflow per l'orchestrazione dei workflow
 - Docker / Docker Compose per servizi riproducibili
-- GitHub Actions per la Continuous Integration
 
 ---
 
@@ -312,6 +317,9 @@ I seguenti componenti sono estensioni pianificate e **non rappresentano ancora f
 
 ```text
 credit-risk-platform/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── config/
 ├── data/
 │   ├── raw/
@@ -346,14 +354,18 @@ L'attuale suite automatizzata contiene **54 test** che coprono componenti fondam
 - reporting
 - MLflow experiment tracking
 
-Quality gate locale attualmente verificato:
+Quality gate attualmente verificati:
 
 ```text
+Locale:
 54 passed
 Ruff: All checks passed
+
+GitHub Actions CI:
+success
 ```
 
-Questi risultati corrispondono al quality gate locale verificato per l'attuale milestone del progetto.
+Il workflow GitHub Actions riproduce il quality gate del progetto su un nuovo runner Ubuntu con Python 3.12, installando le dipendenze del progetto, recuperando il dataset sorgente UCI ed eseguendo Ruff e la suite automatizzata pytest.
 
 ---
 
@@ -367,9 +379,11 @@ Il progetto attualmente utilizza:
 Python >=3.12,<3.13
 ```
 
-Il workflow di sviluppo locale corrente utilizza un ambiente virtuale Python isolato.
+Il workflow di sviluppo locale utilizza un ambiente virtuale Python isolato.
 
-Un ambiente completamente containerizzato non è ancora stato implementato. La riproducibilità basata su Docker fa parte delle estensioni pianificate della piattaforma.
+La Continuous Integration viene eseguita su un nuovo runner Ubuntu di GitHub Actions con Python 3.12.
+
+Un ambiente completamente containerizzato non è ancora stato implementato. La riproducibilità basata su Docker rimane parte delle estensioni pianificate della piattaforma.
 
 ---
 
@@ -387,10 +401,10 @@ Un ambiente completamente containerizzato non è ancora stato implementato. La r
 - [x] Reporting automatizzato
 - [x] MLflow Experiment Tracking
 - [x] Test automatizzati
+- [x] GitHub Actions CI
 - [ ] Persistenza PostgreSQL
 - [ ] Orchestrazione con Apache Airflow
 - [ ] Ambiente Docker Compose
-- [ ] GitHub Actions CI
 
 ---
 

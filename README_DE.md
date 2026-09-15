@@ -7,6 +7,7 @@
 [![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
 [![Tests](https://img.shields.io/badge/tests-54%20passed-brightgreen)](#tests-und-code-qualität)
 [![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
+[![CI](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml)
 
 **Sprache:** 🇬🇧 [English](README.md) · 🇩🇪 [Deutsch](README_DE.md) · 🇮🇹 [Italiano](README_IT.md)
 
@@ -16,7 +17,7 @@
 
 Dieses Portfolio-Projekt implementiert einen reproduzierbaren Machine-Learning-Workflow zur **Modellierung von Kreditausfallrisiken** auf Basis des UCI-Datensatzes *Default of Credit Card Clients*.
 
-Das Projekt geht über reines Modelltraining hinaus und umfasst **Datenvalidierung, Cross-Validation, Wahrscheinlichkeitskalibrierung, Schwellenwertanalyse, Explainability, MLflow Experiment Tracking, automatisiertes Reporting und Softwaretests**.
+Das Projekt geht über reines Modelltraining hinaus und umfasst **Datenvalidierung, Cross-Validation, Wahrscheinlichkeitskalibrierung, Schwellenwertanalyse, Explainability, MLflow Experiment Tracking, automatisiertes Reporting, Softwaretests und Continuous Integration**.
 
 > [!IMPORTANT]
 > **Portfolio-Umfang:** Dieses Projekt demonstriert Konzepte der Kreditrisikomodellentwicklung und Software-Engineering-Praktiken. Es erhebt **keinen Anspruch auf regulatorische Konformität, IRBA-Konformität oder Produktionstauglichkeit**.
@@ -32,14 +33,14 @@ Das Projekt geht über reines Modelltraining hinaus und umfasst **Datenvalidieru
 | ⚖️ **Entscheidungsanalyse** | Threshold-Trade-offs, Precision, Recall und False-Positive-Rate |
 | 🔍 **Explainability** | Permutation Feature Importance |
 | 🧪 **Experiment Tracking** | MLflow mit lokalem SQLite-Backend |
-| 🛠️ **Engineering** | Python-Paketstruktur, pytest, Ruff, Git/GitHub |
+| 🛠️ **Engineering** | Python-Paketstruktur, pytest, Ruff, Git/GitHub, GitHub Actions |
 | 📄 **Reporting** | Automatisierter Modellbericht und diagnostische Visualisierungen |
 
 ---
 
 ## 🏆 Ergebnisse auf einen Blick
 
-### Ausgewähltes Modell — isotonic-calibrated Random Forest
+### Ausgewähltes Modell — Isotonic-Calibrated Random Forest
 
 | ROC-AUC ↑ | Average Precision ↑ | Brier Score ↓ | Log Loss ↓ |
 | :---: | :---: | :---: | :---: |
@@ -92,6 +93,9 @@ Die Kalibrierungsmethode wurde mittels **Cross-Validation auf den Trainingsdaten
                          └─────────────────────────┼─────────────────────┘
                                                    ▼
                                       Reporting & Automated Tests
+                                                   │
+                                                   ▼
+                                      GitHub Actions CI
 ```
 
 ---
@@ -117,6 +121,7 @@ Die Kalibrierungsmethode wurde mittels **Cross-Validation auf den Trainingsdaten
 - Automatisierte Testsuite mit 54 Tests
 - Statische Code-Qualitätsprüfung mit Ruff
 - Versionskontrolle mit Git/GitHub
+- Continuous Integration mit GitHub Actions
 
 ---
 
@@ -134,7 +139,7 @@ Der Random Forest erzielte unter den untersuchten Kandidatenmodellen die stärks
 
 ### Wahrscheinlichkeitskalibrierung
 
-Der Random Forest wurde anschließend mit Sigmoid- und isotonic calibration untersucht.
+Der Random Forest wurde anschließend mit Sigmoid- und Isotonic Calibration untersucht.
 
 Die Auswahl der Kalibrierungsmethode erfolgte mittels Cross-Validation auf den Trainingsdaten, wobei der **Brier Score** als primäres Kalibrierungskriterium verwendet wurde.
 
@@ -150,7 +155,7 @@ Isotonic Calibration wurde ausgewählt, da sie den niedrigsten mittleren Brier S
 
 ## 📊 Evaluation des ausgewählten Modells
 
-Der ausgewählte isotonic-calibrated Random Forest erzielte:
+Der ausgewählte Isotonic-Calibrated Random Forest erzielte:
 
 | Metrik | Holdout-Ergebnis | Richtung |
 | --- | ---: | :---: |
@@ -296,6 +301,7 @@ Dieses Projekt erhebt daher **keinen Anspruch auf**:
 | Testing | pytest |
 | Code-Qualität | Ruff |
 | Versionskontrolle | Git, GitHub |
+| Continuous Integration | GitHub Actions |
 
 ### Geplante Plattformerweiterungen
 
@@ -304,7 +310,6 @@ Die folgenden Komponenten sind geplante Erweiterungen und **noch nicht als ferti
 - PostgreSQL für persistente Plattform-Datenspeicherung
 - Apache Airflow für Workflow-Orchestrierung
 - Docker / Docker Compose für reproduzierbare Services
-- GitHub Actions für Continuous Integration
 
 ---
 
@@ -312,6 +317,9 @@ Die folgenden Komponenten sind geplante Erweiterungen und **noch nicht als ferti
 
 ```text
 credit-risk-platform/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── config/
 ├── data/
 │   ├── raw/
@@ -346,14 +354,18 @@ Die aktuelle automatisierte Testsuite enthält **54 Tests** für zentrale Kompon
 - Reporting
 - MLflow Experiment Tracking
 
-Aktuell verifiziertes lokales Quality Gate:
+Aktuell verifizierte Quality Gates:
 
 ```text
+Lokal:
 54 passed
 Ruff: All checks passed
+
+GitHub Actions CI:
+success
 ```
 
-Diese Ergebnisse entsprechen dem aktuell verifizierten lokalen Quality Gate dieses Projektmeilensteins.
+Der GitHub-Actions-Workflow reproduziert das Quality Gate auf einem frischen Ubuntu-Runner mit Python 3.12. Dabei werden die Projektabhängigkeiten installiert, der UCI-Quelldatensatz abgerufen sowie Ruff und die automatisierte pytest-Testsuite ausgeführt.
 
 ---
 
@@ -367,9 +379,11 @@ Das Projekt verwendet derzeit:
 Python >=3.12,<3.13
 ```
 
-Der aktuelle lokale Entwicklungsworkflow verwendet eine isolierte Python Virtual Environment.
+Der lokale Entwicklungsworkflow verwendet eine isolierte Python Virtual Environment.
 
-Eine vollständige containerisierte Umgebung wurde noch nicht implementiert. Docker-basierte Reproduzierbarkeit ist Teil der geplanten Plattformerweiterung.
+Continuous Integration wird auf einem frischen Ubuntu-GitHub-Actions-Runner mit Python 3.12 ausgeführt.
+
+Eine vollständig containerisierte Umgebung wurde noch nicht implementiert. Docker-basierte Reproduzierbarkeit bleibt Teil der geplanten Plattformerweiterung.
 
 ---
 
@@ -387,10 +401,10 @@ Eine vollständige containerisierte Umgebung wurde noch nicht implementiert. Doc
 - [x] Automatisiertes Reporting
 - [x] MLflow Experiment Tracking
 - [x] Automatisierte Tests
+- [x] GitHub Actions CI
 - [ ] PostgreSQL-Persistenz
 - [ ] Apache-Airflow-Orchestrierung
 - [ ] Docker-Compose-Umgebung
-- [ ] GitHub Actions CI
 
 ---
 
