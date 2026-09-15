@@ -1,50 +1,102 @@
-# Credit Risk Model Development Platform
+# 💳 Credit Risk Model Development Platform
 
-**Language:** [English](README.md) | [Deutsch](README_DE.md) | [Italiano](README_IT.md)
+**End-to-end credit default risk modeling — from raw data to calibrated probability estimates, explainability, experiment tracking, and automated reporting.**
 
-An end-to-end machine learning project for credit default risk modeling, with reproducible data ingestion, validation, preprocessing, model comparison, probability calibration, threshold analysis, explainability, experiment tracking, reporting, and automated testing.
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
+[![Tests](https://img.shields.io/badge/tests-54%20passed-brightgreen)](#testing-and-quality)
+[![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
 
-> **Portfolio project:** This repository demonstrates credit-risk model development concepts and software engineering practices. It does not claim regulatory, IRBA, or production compliance.
+**Language:** 🇬🇧 [English](README.md) · 🇩🇪 [Deutsch](README_DE.md) · 🇮🇹 [Italiano](README_IT.md)
 
-## Project Overview
+---
 
-The project uses the UCI **Default of Credit Card Clients** dataset to develop and evaluate models for predicting default payment in the following month.
+## 🎯 Project at a Glance
 
-The current workflow is:
+This portfolio project implements a reproducible machine-learning workflow for **credit default risk modeling** using the UCI *Default of Credit Card Clients* dataset.
+
+It goes beyond model training by covering **data validation, cross-validation, probability calibration, decision-threshold analysis, explainability, MLflow experiment tracking, automated reporting, and software testing**.
+
+> [!IMPORTANT]
+> **Portfolio scope:** This project demonstrates credit-risk model-development concepts and software-engineering practices. It does **not** claim regulatory, IRBA, or production compliance.
+
+### What this project demonstrates
+
+| Area | Implementation |
+| --- | --- |
+| 💳 **Credit Risk** | Default-risk / probability modeling |
+| 🧠 **Machine Learning** | Logistic Regression, Decision Tree, Random Forest |
+| 📊 **Model Validation** | Stratified 5-fold CV, ROC-AUC, AP, Brier Score, Log Loss |
+| 🎯 **Calibration** | Sigmoid and isotonic probability calibration |
+| ⚖️ **Decision Analysis** | Threshold trade-offs, precision, recall and false-positive rate |
+| 🔍 **Explainability** | Permutation feature importance |
+| 🧪 **Experiment Tracking** | MLflow with local SQLite backend |
+| 🛠️ **Engineering** | Python package structure, pytest, Ruff, Git/GitHub |
+| 📄 **Reporting** | Automated model report and diagnostic visualizations |
+
+---
+
+## 🏆 Results at a Glance
+
+### Selected Model — Isotonic-Calibrated Random Forest
+
+| ROC-AUC ↑ | Average Precision ↑ | Brier Score ↓ | Log Loss ↓ |
+| :---: | :---: | :---: | :---: |
+| **0.7625** | **0.5425** | **0.1375** | **0.4381** |
+
+The calibration method was selected using **training-data cross-validation**, with Brier Score as the primary calibration criterion.
+
+> [!NOTE]
+> The holdout dataset had already been inspected during earlier development stages. These values therefore represent the current portfolio evaluation and **not a fresh independent final test set**.
+
+---
+
+## 🔄 End-to-End Workflow
 
 ```text
-UCI Dataset
-    |
-    v
-Data Ingestion
-    |
-    v
-Data Validation
-    |
-    v
-Preprocessing
-    |
-    v
-Train / Holdout Split
-    |
-    v
-Cross-Validated Model Comparison
-    |
-    v
-Probability Calibration
-    |
-    +--> Threshold Analysis
-    |
-    +--> Explainability
-    |
-    v
-MLflow Experiment Tracking
-    |
-    v
-Automated Reporting & Testing
+                    UCI Credit Card Default Dataset
+                                 │
+                                 ▼
+                         Data Ingestion
+                                 │
+                                 ▼
+                         Data Validation
+                                 │
+                                 ▼
+                          Preprocessing
+                                 │
+                                 ▼
+                     Stratified Train / Holdout
+                                 │
+                                 ▼
+                 5-Fold Cross-Validated Comparison
+                        ┌────────┼────────┐
+                        ▼        ▼        ▼
+                     Logistic  Decision  Random
+                    Regression   Tree    Forest
+                                           │
+                                           ▼
+                                  Probability Calibration
+                                    ┌──────┴──────┐
+                                    ▼             ▼
+                                Sigmoid       Isotonic
+                                                   │
+                                                   ▼
+                                          Selected Model
+                                                   │
+                         ┌─────────────────────────┼─────────────────────┐
+                         ▼                         ▼                     ▼
+                 Threshold Analysis        Explainability        MLflow Tracking
+                         │                         │                     │
+                         └─────────────────────────┼─────────────────────┘
+                                                   ▼
+                                      Reporting & Automated Tests
 ```
 
-## Implemented Features
+---
+
+## 🛠️ Implemented Features
 
 - Reproducible ingestion of the UCI source dataset
 - Dataset schema and quality validation
@@ -66,13 +118,15 @@ Automated Reporting & Testing
 - Ruff static code-quality checks
 - Git/GitHub version control
 
-## Model Development
+---
+
+## 🧠 Model Development
 
 Three candidate classifiers are compared:
 
 | Model | Mean CV ROC-AUC | Mean CV Average Precision |
 | --- | ---: | ---: |
-| Random Forest | 0.7674 | 0.5397 |
+| **Random Forest** | **0.7674** | **0.5397** |
 | Logistic Regression | 0.7272 | 0.5068 |
 | Decision Tree | 0.6149 | 0.2908 |
 
@@ -86,56 +140,90 @@ Calibration-method selection was performed using training-data cross-validation,
 
 | Method | Mean CV ROC-AUC | Mean CV Brier Score | Mean CV Log Loss |
 | --- | ---: | ---: | ---: |
-| Isotonic | 0.7736 | **0.1355** | **0.4321** |
+| **Isotonic** | 0.7736 | **0.1355** | **0.4321** |
 | Sigmoid | **0.7741** | 0.1357 | 0.4331 |
 | Uncalibrated | 0.7674 | 0.1376 | 0.4405 |
 
 Isotonic calibration was selected because it achieved the lowest mean cross-validation Brier Score.
 
-## Selected Model Evaluation
+---
+
+## 📊 Selected Model Evaluation
 
 The selected isotonic-calibrated Random Forest produced:
 
-| Metric | Holdout Result |
-| --- | ---: |
-| ROC-AUC | 0.7625 |
-| Average Precision | 0.5425 |
-| Brier Score | 0.1375 |
-| Log Loss | 0.4381 |
+| Metric | Holdout Result | Direction |
+| --- | ---: | :---: |
+| ROC-AUC | **0.7625** | ↑ higher is better |
+| Average Precision | **0.5425** | ↑ higher is better |
+| Brier Score | **0.1375** | ↓ lower is better |
+| Log Loss | **0.4381** | ↓ lower is better |
 
 These results indicate moderate predictive discrimination and probability-quality improvement relative to the uncalibrated Random Forest.
 
-**Methodological note:** the calibration method was selected using training-data cross-validation. The holdout dataset reported here had already been inspected during earlier model-development stages and should therefore not be interpreted as a fresh independent final test set.
+> [!CAUTION]
+> **Methodological limitation:** the calibration method was selected using training-data cross-validation. The holdout dataset reported here had already been inspected during earlier model-development stages and should therefore not be interpreted as a fresh independent final test set.
 
-## Threshold Analysis
+---
+
+## 📈 Model Diagnostics
+
+### ROC Curves
+
+The ROC curves compare the ranking/discrimination performance of the evaluated candidate models.
+
+![ROC curves](reports/figures/roc_curves.png)
+
+### Probability Calibration
+
+Calibration analysis compares predicted default probabilities with observed default frequencies.
+
+![Calibration method comparison](reports/figures/calibration_method_comparison.png)
+
+### Model Explainability
+
+Permutation importance is used to examine how strongly the fitted Random Forest depends on individual input features.
+
+![Permutation feature importance](reports/figures/permutation_importance.png)
+
+---
+
+## ⚖️ Threshold Analysis
 
 The project evaluates multiple probability thresholds rather than assuming that `0.5` is automatically appropriate.
 
 This demonstrates the trade-off between:
 
-- false negatives: default-risk cases not flagged by the model
-- false positives: non-default cases flagged as risky
-- recall
-- precision
-- false-positive rate
+- **False negatives** — default-risk cases not flagged by the model
+- **False positives** — non-default cases flagged as risky
+- **Recall**
+- **Precision**
+- **False-positive rate**
 
 No business-optimal threshold is claimed because the UCI dataset does not provide the economic cost assumptions required for such a decision.
 
-## Explainability
+---
+
+## 🔍 Explainability
 
 Permutation importance is used to examine how strongly the fitted Random Forest depends on individual input features.
 
 The strongest observed model dependencies include:
 
-1. `PAY_0`
-2. `LIMIT_BAL`
-3. `PAY_2`
-4. `BILL_AMT1`
-5. `PAY_3`
+| Rank | Feature |
+| ---: | --- |
+| 1 | `PAY_0` |
+| 2 | `LIMIT_BAL` |
+| 3 | `PAY_2` |
+| 4 | `BILL_AMT1` |
+| 5 | `PAY_3` |
 
-Permutation importance measures **model dependence, not causality**. Correlated predictors can also distribute or dilute measured importance.
+> [!NOTE]
+> Permutation importance measures **model dependence, not causality**. Correlated predictors can also distribute or dilute measured importance.
 
-## Experiment Tracking
+---
+
+## 🧪 Experiment Tracking
 
 MLflow is used to track the selected model experiment.
 
@@ -149,28 +237,29 @@ The current local setup records:
 - serialized scikit-learn model artifact
 - MLflow environment and model metadata
 
-Tracking metadata is stored using a local SQLite backend. Local MLflow databases and generated tracking artifacts are excluded from Git version control.
+Tracking metadata is stored using a local **SQLite backend**.
 
-## Dataset
+Local MLflow databases and generated tracking artifacts are excluded from Git version control.
 
-The project uses the **UCI Machine Learning Repository - Default of Credit Card Clients** dataset.
+---
 
-The dataset contains:
+## 📦 Dataset
 
-- 30,000 observations
-- a binary default target
-- credit-limit information
-- payment-status history
-- bill statement amounts
-- previous payment amounts
-- demographic attributes
+The project uses the **UCI Machine Learning Repository — Default of Credit Card Clients** dataset.
 
-Dataset source:
+| Property | Value |
+| --- | --- |
+| Observations | 30,000 |
+| Target | Binary default indicator |
+| Credit information | Credit limit |
+| Payment behavior | Payment-status history |
+| Financial history | Bill statement and previous payment amounts |
+| Additional attributes | Demographic variables |
 
+**Dataset source:**
 https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients
 
-DOI:
-
+**DOI:**
 https://doi.org/10.24432/C55S3H
 
 The dataset is distributed under the **CC BY 4.0** license.
@@ -188,22 +277,23 @@ This project therefore does **not** claim:
 - production readiness
 - representation of current European credit portfolios
 
-## Technology Stack
+---
+
+## ⚙️ Technology Stack
 
 ### Implemented
 
-- Python 3.12
-- Pandas
-- NumPy
-- scikit-learn
-- Matplotlib
-- Seaborn
-- MLflow
-- SQLite
-- pytest
-- Ruff
-- Git
-- GitHub
+| Category | Technologies |
+| --- | --- |
+| Language | Python 3.12 |
+| Data | Pandas, NumPy |
+| Machine Learning | scikit-learn |
+| Visualization | Matplotlib, Seaborn |
+| Experiment Tracking | MLflow |
+| Tracking Backend | SQLite |
+| Testing | pytest |
+| Code Quality | Ruff |
+| Version Control | Git, GitHub |
 
 ### Planned Platform Extensions
 
@@ -214,27 +304,33 @@ The following components are planned extensions and are **not yet represented as
 - Docker / Docker Compose for reproducible services
 - GitHub Actions for continuous integration
 
-## Project Structure
+---
+
+## 📁 Project Structure
 
 ```text
 credit-risk-platform/
-|-- config/
-|-- data/
-|   |-- raw/
-|   `-- processed/
-|-- docker/
-|-- notebooks/
-|-- reports/
-|   `-- figures/
-|-- src/
-|   `-- credit_risk_platform/
-|-- tests/
-|-- pyproject.toml
-|-- .gitignore
-`-- README.md
+├── config/
+├── data/
+│   ├── raw/
+│   └── processed/
+├── docker/
+├── notebooks/
+├── reports/
+│   └── figures/
+├── src/
+│   └── credit_risk_platform/
+├── tests/
+├── README.md
+├── README_DE.md
+├── README_IT.md
+├── pyproject.toml
+└── .gitignore
 ```
 
-## Testing and Quality
+---
+
+## ✅ Testing and Quality
 
 The current automated test suite contains **54 tests** covering core components including:
 
@@ -248,7 +344,7 @@ The current automated test suite contains **54 tests** covering core components 
 - reporting
 - MLflow experiment tracking
 
-At the current project milestone:
+Current verified local quality gate:
 
 ```text
 54 passed
@@ -257,7 +353,9 @@ Ruff: All checks passed
 
 These results correspond to the current verified local quality gate for this project milestone.
 
-## Reproducibility
+---
+
+## 🔁 Reproducibility
 
 Project dependencies are defined in `pyproject.toml`.
 
@@ -271,7 +369,9 @@ The current local development workflow uses an isolated Python virtual environme
 
 A complete containerized environment has not yet been implemented. Docker-based reproducibility is part of the planned platform extension.
 
-## Roadmap
+---
+
+## 🗺️ Roadmap
 
 - [x] Data ingestion
 - [x] Data validation
@@ -290,8 +390,10 @@ A complete containerized environment has not yet been implemented. Docker-based 
 - [ ] Docker Compose environment
 - [ ] GitHub Actions CI
 
-## Disclaimer
+---
+
+## ⚠️ Disclaimer
 
 This repository is an educational and portfolio implementation inspired by professional credit-risk model-development workflows.
 
-The models, validation procedures, dataset, and software architecture presented here are not sufficient to establish regulatory compliance, IRBA conformity, or production suitability.
+The models, validation procedures, dataset, and software architecture presented here are **not sufficient to establish regulatory compliance, IRBA conformity, or production suitability**.
