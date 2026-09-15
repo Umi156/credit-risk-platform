@@ -5,7 +5,6 @@
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
-[![Tests](https://img.shields.io/badge/tests-61%20passed-brightgreen)](#testing-and-quality)
 [![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
 [![CI](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml)
 
@@ -125,7 +124,7 @@ The calibration method was selected using **training-data cross-validation**, wi
 - Automated Markdown model report
 - MLflow experiment tracking with local SQLite backend
 - MLflow model serialization using `skops`
-- Automated test suite with 61 tests
+- Automated test suite
 - Ruff static code-quality checks
 - Git/GitHub version control
 - Continuous integration with GitHub Actions
@@ -361,7 +360,7 @@ credit-risk-platform/
 
 ## ✅ Testing and Quality
 
-The current automated test suite contains **54 tests** covering core components including:
+The automated test suite covers core components including:
 
 - preprocessing
 - modeling
