@@ -1,145 +1,233 @@
-# Credit Risk Model Development Platform
+# 💳 Credit Risk Model Development Platform
 
-**Lingua:** [English](README.md) | [Deutsch](README_DE.md) | [Italiano](README_IT.md)
+**Modellazione end-to-end del rischio di default creditizio — dai dati grezzi alle probabilità calibrate, all'explainability, al monitoraggio degli esperimenti e alla reportistica automatizzata.**
 
-Un progetto end-to-end di machine learning per la modellazione del rischio di insolvenza creditizia, con acquisizione riproducibile dei dati, validazione, preprocessing, confronto dei modelli, calibrazione delle probabilità, analisi delle soglie decisionali, spiegabilità, tracciamento degli esperimenti, reporting e test automatizzati.
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
+[![Tests](https://img.shields.io/badge/tests-54%20passed-brightgreen)](#test-e-qualità-del-codice)
+[![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
 
-> **Progetto portfolio:** Questo repository dimostra concetti di sviluppo di modelli di rischio di credito e pratiche di software engineering. Non dichiara conformità normativa, conformità IRBA o idoneità all'uso in produzione.
+**Lingua:** 🇬🇧 [English](README.md) · 🇩🇪 [Deutsch](README_DE.md) · 🇮🇹 [Italiano](README_IT.md)
 
-## Panoramica del progetto
+---
 
-Il progetto utilizza il dataset UCI **Default of Credit Card Clients** per sviluppare e valutare modelli destinati a prevedere l'insolvenza di pagamento nel mese successivo.
+## 🎯 Il progetto in sintesi
 
-Il workflow attuale è:
+Questo progetto di portfolio implementa un workflow di machine learning riproducibile per la **modellazione del rischio di default creditizio**, utilizzando il dataset UCI *Default of Credit Card Clients*.
+
+Il progetto va oltre il semplice addestramento del modello e comprende **validazione dei dati, cross-validation, calibrazione delle probabilità, analisi delle soglie decisionali, explainability, experiment tracking con MLflow, reportistica automatizzata e test del software**.
+
+> [!IMPORTANT]
+> **Ambito del portfolio:** questo progetto dimostra concetti di sviluppo di modelli di rischio di credito e pratiche di software engineering. **Non dichiara conformità normativa, conformità IRBA o idoneità alla produzione.**
+
+### Cosa dimostra questo progetto
+
+| Area | Implementazione |
+| --- | --- |
+| 💳 **Rischio di credito** | Modellazione del rischio / della probabilità di default |
+| 🧠 **Machine Learning** | Logistic Regression, Decision Tree, Random Forest |
+| 📊 **Validazione del modello** | Stratified 5-fold CV, ROC-AUC, AP, Brier Score, Log Loss |
+| 🎯 **Calibrazione** | Calibrazione sigmoid e isotonic delle probabilità |
+| ⚖️ **Analisi decisionale** | Trade-off delle soglie, precision, recall e false-positive rate |
+| 🔍 **Explainability** | Permutation Feature Importance |
+| 🧪 **Experiment Tracking** | MLflow con backend SQLite locale |
+| 🛠️ **Engineering** | Struttura package Python, pytest, Ruff, Git/GitHub |
+| 📄 **Reporting** | Report automatizzato del modello e visualizzazioni diagnostiche |
+
+---
+
+## 🏆 Risultati in sintesi
+
+### Modello selezionato — Random Forest con calibrazione isotonic
+
+| ROC-AUC ↑ | Average Precision ↑ | Brier Score ↓ | Log Loss ↓ |
+| :---: | :---: | :---: | :---: |
+| **0.7625** | **0.5425** | **0.1375** | **0.4381** |
+
+Il metodo di calibrazione è stato selezionato mediante **cross-validation sui dati di training**, utilizzando il Brier Score come criterio principale di calibrazione.
+
+> [!NOTE]
+> Il dataset holdout era già stato analizzato durante precedenti fasi di sviluppo. Questi valori rappresentano quindi la valutazione corrente del progetto di portfolio e **non un nuovo test set finale completamente indipendente**.
+
+---
+
+## 🔄 Workflow end-to-end
 
 ```text
-Dataset UCI
-    |
-    v
-Acquisizione dei dati
-    |
-    v
-Validazione dei dati
-    |
-    v
-Preprocessing
-    |
-    v
-Suddivisione Training / Holdout
-    |
-    v
-Confronto dei modelli con Cross-Validation
-    |
-    v
-Calibrazione delle probabilità
-    |
-    +--> Analisi delle soglie
-    |
-    +--> Spiegabilità
-    |
-    v
-MLflow Experiment Tracking
-    |
-    v
-Reporting e Testing automatizzati
+                    UCI Credit Card Default Dataset
+                                 │
+                                 ▼
+                         Data Ingestion
+                                 │
+                                 ▼
+                         Data Validation
+                                 │
+                                 ▼
+                          Preprocessing
+                                 │
+                                 ▼
+                     Stratified Train / Holdout
+                                 │
+                                 ▼
+                 5-Fold Cross-Validated Comparison
+                        ┌────────┼────────┐
+                        ▼        ▼        ▼
+                     Logistic  Decision  Random
+                    Regression   Tree    Forest
+                                           │
+                                           ▼
+                                  Probability Calibration
+                                    ┌──────┴──────┐
+                                    ▼             ▼
+                                Sigmoid       Isotonic
+                                                   │
+                                                   ▼
+                                          Selected Model
+                                                   │
+                         ┌─────────────────────────┼─────────────────────┐
+                         ▼                         ▼                     ▼
+                 Threshold Analysis        Explainability        MLflow Tracking
+                         │                         │                     │
+                         └─────────────────────────┼─────────────────────┘
+                                                   ▼
+                                      Reporting & Automated Tests
 ```
 
-## Funzionalità implementate
+---
 
-- Acquisizione riproducibile del dataset UCI
+## 🛠️ Funzionalità implementate
+
+- Acquisizione riproducibile del dataset sorgente UCI
 - Validazione dello schema e della qualità dei dati
 - Pipeline di preprocessing per i dati di rischio di credito
-- Suddivisione stratificata in dati di training e holdout
-- Logistic Regression come baseline
-- Decision Tree
-- Random Forest
+- Suddivisione stratificata in training e holdout
+- Baseline con Logistic Regression
+- Modello Decision Tree
+- Modello Random Forest
 - Cross-validation stratificata a 5 fold
 - Valutazione con ROC-AUC, Average Precision, Brier Score e Log Loss
 - Analisi delle soglie decisionali
-- Calibrazione delle probabilità con metodi sigmoid e isotonic
-- Spiegabilità del modello mediante Permutation Importance
-- Visualizzazioni ROC, Precision-Recall, calibrazione, soglie e Feature Importance
-- Report automatizzato del modello in formato Markdown
+- Calibrazione delle probabilità con sigmoid e isotonic calibration
+- Explainability del modello mediante Permutation Importance
+- Visualizzazioni ROC, Precision-Recall, calibration, threshold e feature importance
+- Report automatizzato del modello in Markdown
 - MLflow Experiment Tracking con backend SQLite locale
-- Serializzazione del modello MLflow mediante `skops`
+- Serializzazione del modello MLflow tramite `skops`
 - Suite automatizzata di 54 test
 - Controlli statici della qualità del codice con Ruff
-- Controllo di versione con Git e GitHub
+- Controllo di versione con Git/GitHub
 
-## Sviluppo dei modelli
+---
+
+## 🧠 Sviluppo del modello
 
 Vengono confrontati tre modelli candidati:
 
-| Modello | ROC-AUC media CV | Average Precision media CV |
+| Modello | Mean CV ROC-AUC | Mean CV Average Precision |
 | --- | ---: | ---: |
-| Random Forest | 0.7674 | 0.5397 |
+| **Random Forest** | **0.7674** | **0.5397** |
 | Logistic Regression | 0.7272 | 0.5068 |
 | Decision Tree | 0.6149 | 0.2908 |
 
-Tra i modelli candidati valutati, il Random Forest ha ottenuto la migliore capacità discriminante in cross-validation.
+Il Random Forest ha ottenuto la migliore capacità discriminante in cross-validation tra i modelli candidati valutati.
 
 ### Calibrazione delle probabilità
 
 Il Random Forest è stato successivamente valutato con calibrazione sigmoid e isotonic.
 
-La selezione del metodo di calibrazione è stata effettuata tramite cross-validation sui soli dati di training, utilizzando il **Brier Score** come criterio primario di calibrazione.
+La selezione del metodo di calibrazione è stata effettuata mediante cross-validation sui dati di training, utilizzando il **Brier Score** come criterio principale di calibrazione.
 
-| Metodo | ROC-AUC media CV | Brier Score medio CV | Log Loss medio CV |
+| Metodo | Mean CV ROC-AUC | Mean CV Brier Score | Mean CV Log Loss |
 | --- | ---: | ---: | ---: |
-| Isotonic | 0.7736 | **0.1355** | **0.4321** |
+| **Isotonic** | 0.7736 | **0.1355** | **0.4321** |
 | Sigmoid | **0.7741** | 0.1357 | 0.4331 |
-| Non calibrato | 0.7674 | 0.1376 | 0.4405 |
+| Uncalibrated | 0.7674 | 0.1376 | 0.4405 |
 
-La calibrazione isotonic è stata selezionata perché ha ottenuto il Brier Score medio più basso in cross-validation.
+La calibrazione isotonic è stata selezionata perché ha ottenuto il Brier Score medio più basso nella cross-validation.
 
-## Valutazione del modello selezionato
+---
+
+## 📊 Valutazione del modello selezionato
 
 Il Random Forest selezionato con calibrazione isotonic ha prodotto:
 
-| Metrica | Risultato Holdout |
-| --- | ---: |
-| ROC-AUC | 0.7625 |
-| Average Precision | 0.5425 |
-| Brier Score | 0.1375 |
-| Log Loss | 0.4381 |
+| Metrica | Risultato holdout | Direzione |
+| --- | ---: | :---: |
+| ROC-AUC | **0.7625** | ↑ più alto è meglio |
+| Average Precision | **0.5425** | ↑ più alto è meglio |
+| Brier Score | **0.1375** | ↓ più basso è meglio |
+| Log Loss | **0.4381** | ↓ più basso è meglio |
 
-I risultati indicano una capacità discriminante predittiva moderata e un miglioramento della qualità delle probabilità rispetto al Random Forest non calibrato.
+I risultati indicano una capacità discriminante moderata e un miglioramento della qualità delle probabilità rispetto al Random Forest non calibrato.
 
-**Nota metodologica:** il metodo di calibrazione è stato selezionato mediante cross-validation sui dati di training. Il dataset holdout riportato qui era già stato esaminato durante fasi precedenti dello sviluppo del modello e non deve quindi essere interpretato come un nuovo test set finale e indipendente.
+> [!CAUTION]
+> **Limitazione metodologica:** il metodo di calibrazione è stato selezionato mediante cross-validation sui dati di training. Il dataset holdout riportato qui era già stato analizzato durante precedenti fasi di sviluppo e non deve quindi essere interpretato come un nuovo test set finale indipendente.
 
-## Analisi delle soglie
+---
 
-Il progetto valuta diverse soglie di probabilità anziché assumere automaticamente che `0.5` sia la soglia appropriata.
+## 📈 Diagnostica del modello
 
-Questo permette di analizzare il compromesso tra:
+### Curve ROC
 
-- False Negatives: casi di insolvenza non identificati dal modello come rischiosi
-- False Positives: casi senza insolvenza identificati come rischiosi
-- Recall
-- Precision
-- False-Positive Rate
+Le curve ROC confrontano la capacità di ranking e discriminazione dei modelli candidati valutati.
 
-Non viene dichiarata alcuna soglia ottimale dal punto di vista economico, poiché il dataset UCI non fornisce le ipotesi sui costi necessarie per tale decisione.
+![ROC curves](reports/figures/roc_curves.png)
 
-## Spiegabilità
+### Calibrazione delle probabilità
 
-La Permutation Importance viene utilizzata per analizzare quanto il Random Forest addestrato dipenda dalle singole variabili di input.
+L'analisi di calibrazione confronta le probabilità di default previste con le frequenze di default osservate.
 
-Tra le dipendenze più forti osservate nel modello figurano:
+![Calibration method comparison](reports/figures/calibration_method_comparison.png)
 
-1. `PAY_0`
-2. `LIMIT_BAL`
-3. `PAY_2`
-4. `BILL_AMT1`
-5. `PAY_3`
+### Explainability del modello
 
-La Permutation Importance misura la **dipendenza del modello, non la causalità**. Predittori correlati possono inoltre distribuire o ridurre l'importanza misurata.
+La Permutation Importance viene utilizzata per analizzare quanto il Random Forest addestrato dipenda dalle singole feature di input.
 
-## Experiment Tracking
+![Permutation feature importance](reports/figures/permutation_importance.png)
 
-MLflow viene utilizzato per tracciare l'esperimento relativo al modello selezionato.
+---
 
-La configurazione locale attuale registra:
+## ⚖️ Analisi delle soglie
+
+Il progetto valuta diverse soglie di probabilità anziché assumere automaticamente che `0.5` sia appropriato.
+
+Questo permette di analizzare i trade-off tra:
+
+- **False negatives** — casi a rischio di default non identificati dal modello
+- **False positives** — casi senza default classificati come rischiosi
+- **Recall**
+- **Precision**
+- **False-positive rate**
+
+Non viene dichiarata una soglia ottimale dal punto di vista economico, poiché il dataset UCI non contiene le ipotesi sui costi necessarie per prendere tale decisione.
+
+---
+
+## 🔍 Explainability
+
+La Permutation Importance viene utilizzata per analizzare quanto il Random Forest addestrato dipenda dalle singole feature di input.
+
+Le dipendenze dal modello più forti osservate includono:
+
+| Posizione | Feature |
+| ---: | --- |
+| 1 | `PAY_0` |
+| 2 | `LIMIT_BAL` |
+| 3 | `PAY_2` |
+| 4 | `BILL_AMT1` |
+| 5 | `PAY_3` |
+
+> [!NOTE]
+> La Permutation Importance misura la **dipendenza del modello, non la causalità**. Predictor correlati possono inoltre distribuire o ridurre l'importance misurata tra più feature.
+
+---
+
+## 🧪 Experiment Tracking
+
+MLflow viene utilizzato per il tracking dell'esperimento relativo al modello selezionato.
+
+La configurazione locale corrente registra:
 
 - parametri del modello
 - ROC-AUC
@@ -149,27 +237,30 @@ La configurazione locale attuale registra:
 - artefatto serializzato del modello scikit-learn
 - metadati MLflow relativi all'ambiente e al modello
 
-I metadati di tracking vengono memorizzati tramite un backend SQLite locale. I database MLflow locali e gli artefatti di tracking generati sono esclusi dal controllo di versione Git.
+I metadati di tracking vengono archiviati tramite un **backend SQLite locale**.
 
-## Dataset
+I database MLflow locali e gli artefatti di tracking generati sono esclusi dal controllo di versione Git.
 
-Il progetto utilizza il dataset **Default of Credit Card Clients** dell'UCI Machine Learning Repository.
+---
 
-Il dataset contiene:
+## 📦 Dataset
 
-- 30.000 osservazioni
-- un target binario di insolvenza
-- informazioni sul limite di credito
-- storico dello stato dei pagamenti
-- importi degli estratti conto
-- importi dei pagamenti precedenti
-- caratteristiche demografiche
+Il progetto utilizza il dataset **UCI Machine Learning Repository — Default of Credit Card Clients**.
 
-Fonte del dataset:
+| Proprietà | Valore |
+| --- | --- |
+| Osservazioni | 30.000 |
+| Target | Indicatore binario di default |
+| Informazioni sul credito | Limite di credito |
+| Comportamento di pagamento | Storico dello stato dei pagamenti |
+| Storico finanziario | Importi fatturati e pagamenti precedenti |
+| Altri attributi | Variabili demografiche |
+
+**Fonte del dataset:**
 
 https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients
 
-DOI:
+**DOI:**
 
 https://doi.org/10.24432/C55S3H
 
@@ -188,67 +279,74 @@ Questo progetto pertanto **non dichiara**:
 - idoneità alla produzione
 - rappresentatività degli attuali portafogli di credito europei
 
-## Stack tecnologico
+---
+
+## ⚙️ Stack tecnologico
 
 ### Implementato
 
-- Python 3.12
-- Pandas
-- NumPy
-- scikit-learn
-- Matplotlib
-- Seaborn
-- MLflow
-- SQLite
-- pytest
-- Ruff
-- Git
-- GitHub
+| Categoria | Tecnologie |
+| --- | --- |
+| Linguaggio | Python 3.12 |
+| Dati | Pandas, NumPy |
+| Machine Learning | scikit-learn |
+| Visualizzazione | Matplotlib, Seaborn |
+| Experiment Tracking | MLflow |
+| Backend di tracking | SQLite |
+| Testing | pytest |
+| Qualità del codice | Ruff |
+| Controllo di versione | Git, GitHub |
 
-### Estensioni pianificate della piattaforma
+### Estensioni della piattaforma pianificate
 
-I seguenti componenti sono estensioni pianificate e **non vengono ancora presentati come funzionalità implementate**:
+I seguenti componenti sono estensioni pianificate e **non rappresentano ancora funzionalità completate**:
 
 - PostgreSQL per la persistenza dei dati della piattaforma
 - Apache Airflow per l'orchestrazione dei workflow
 - Docker / Docker Compose per servizi riproducibili
 - GitHub Actions per la Continuous Integration
 
-## Struttura del progetto
+---
+
+## 📁 Struttura del progetto
 
 ```text
 credit-risk-platform/
-|-- config/
-|-- data/
-|   |-- raw/
-|   `-- processed/
-|-- docker/
-|-- notebooks/
-|-- reports/
-|   `-- figures/
-|-- src/
-|   `-- credit_risk_platform/
-|-- tests/
-|-- pyproject.toml
-|-- .gitignore
-`-- README.md
+├── config/
+├── data/
+│   ├── raw/
+│   └── processed/
+├── docker/
+├── notebooks/
+├── reports/
+│   └── figures/
+├── src/
+│   └── credit_risk_platform/
+├── tests/
+├── README.md
+├── README_DE.md
+├── README_IT.md
+├── pyproject.toml
+└── .gitignore
 ```
 
-## Test e qualità del codice
+---
 
-La suite automatizzata attuale comprende **54 test** che coprono componenti fondamentali, tra cui:
+## ✅ Test e qualità del codice
+
+L'attuale suite automatizzata contiene **54 test** che coprono componenti fondamentali tra cui:
 
 - preprocessing
-- modellazione
-- valutazione
-- analisi delle soglie
-- calibrazione
-- spiegabilità
-- visualizzazione
+- modeling
+- evaluation
+- threshold analysis
+- calibration
+- explainability
+- visualization
 - reporting
-- MLflow Experiment Tracking
+- MLflow experiment tracking
 
-Per l'attuale milestone verificata del progetto:
+Quality gate locale attualmente verificato:
 
 ```text
 54 passed
@@ -257,41 +355,47 @@ Ruff: All checks passed
 
 Questi risultati corrispondono al quality gate locale verificato per l'attuale milestone del progetto.
 
-## Riproducibilità
+---
+
+## 🔁 Riproducibilità
 
 Le dipendenze del progetto sono definite in `pyproject.toml`.
 
-Il progetto attualmente richiede:
+Il progetto attualmente utilizza:
 
 ```text
 Python >=3.12,<3.13
 ```
 
-Il workflow di sviluppo locale utilizza un ambiente virtuale Python isolato.
+Il workflow di sviluppo locale corrente utilizza un ambiente virtuale Python isolato.
 
 Un ambiente completamente containerizzato non è ancora stato implementato. La riproducibilità basata su Docker fa parte delle estensioni pianificate della piattaforma.
 
-## Roadmap
+---
 
-- [x] Acquisizione dei dati
-- [x] Validazione dei dati
+## 🗺️ Roadmap
+
+- [x] Data ingestion
+- [x] Data validation
 - [x] Preprocessing
 - [x] Modelli baseline e candidati
 - [x] Cross-validation
 - [x] Valutazione holdout
-- [x] Analisi delle soglie
-- [x] Spiegabilità
-- [x] Calibrazione delle probabilità
+- [x] Threshold analysis
+- [x] Explainability
+- [x] Probability calibration
 - [x] Reporting automatizzato
 - [x] MLflow Experiment Tracking
 - [x] Test automatizzati
 - [ ] Persistenza PostgreSQL
-- [ ] Orchestrazione Apache Airflow
+- [ ] Orchestrazione con Apache Airflow
 - [ ] Ambiente Docker Compose
 - [ ] GitHub Actions CI
 
-## Disclaimer
+---
 
-Questo repository è un'implementazione didattica e di portfolio ispirata ai workflow professionali per lo sviluppo di modelli di rischio di credito.
+## ⚠️ Disclaimer
 
-I modelli, le procedure di validazione, i dati e l'architettura software presentati non sono sufficienti a dimostrare conformità normativa, conformità IRBA o idoneità all'uso in produzione.
+Questo repository è un'implementazione educativa e di portfolio ispirata ai workflow professionali di sviluppo dei modelli di rischio di credito.
+
+I modelli, le procedure di validazione, il dataset e l'architettura software presentati qui **non sono sufficienti per dimostrare conformità normativa, conformità IRBA o idoneità alla produzione**.
