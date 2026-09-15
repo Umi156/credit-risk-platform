@@ -10,6 +10,7 @@ from credit_risk_platform.evaluation import (
     calculate_roc_curve,
     evaluate_model,
 )
+from credit_risk_platform.threshold_analysis import analyze_thresholds
 
 FIGURES_DIR = Path("reports/figures")
 
@@ -300,6 +301,96 @@ def plot_calibration_curves(
     return output_path
 
 
+def plot_threshold_tradeoff(
+    model: Pipeline,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+) -> Path:
+    """
+    Visualize how classification performance changes across PD thresholds.
+    Visualisiert, wie sich die Klassifikationsleistung über verschiedene
+    PD-Schwellenwerte verändert.
+
+    A lower threshold flags more observations as risky and usually increases
+    Recall, while a higher threshold is more selective and can increase
+    Precision.
+
+    Ein niedrigerer Schwellenwert markiert mehr Beobachtungen als riskant und
+    erhöht typischerweise den Recall. Ein höherer Schwellenwert ist selektiver
+    und kann die Precision erhöhen.
+    """
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    threshold_results = analyze_thresholds(
+        model,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+    )
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    ax.plot(
+        threshold_results["threshold"],
+        threshold_results["precision"],
+        marker="o",
+        label="Precision",
+    )
+
+    ax.plot(
+        threshold_results["threshold"],
+        threshold_results["recall"],
+        marker="o",
+        label="Recall",
+    )
+
+    ax.plot(
+        threshold_results["threshold"],
+        threshold_results["false_positive_rate"],
+        marker="o",
+        label="False Positive Rate (FPR)",
+    )
+
+    # The chart illustrates a decision trade-off rather than an optimal
+    # threshold. Business costs would be required to justify an optimum.
+    # Die Grafik zeigt einen Entscheidungs-Trade-off und keinen optimalen
+    # Schwellenwert. Für ein Optimum wären reale Business-Kosten erforderlich.
+    ax.set_xlabel("PD classification threshold")
+    ax.set_ylabel("Metric value")
+    ax.set_ylim(0, 1)
+
+    ax.set_title(
+        "Threshold choice changes the credit-risk decision trade-off\n"
+        "Lower thresholds find more defaults but generate more false alarms"
+    )
+
+    ax.legend()
+    ax.grid(alpha=0.3)
+
+    ax.text(
+        0.98,
+        0.02,
+        (
+            "No optimal threshold claimed\n"
+            "Business costs are not available in the dataset"
+        ),
+        transform=ax.transAxes,
+        horizontalalignment="right",
+        verticalalignment="bottom",
+        fontsize=9,
+    )
+
+    output_path = FIGURES_DIR / "threshold_tradeoff.png"
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+
+    return output_path
+
+
 if __name__ == "__main__":
     from credit_risk_platform.data_ingestion import load_raw_dataset
     from credit_risk_platform.modeling import (
@@ -346,7 +437,16 @@ if __name__ == "__main__":
         y_train,
         X_test,
         y_test,
+    ) 
+
+    threshold_path = plot_threshold_tradeoff(
+        models["random_forest"],
+        X_train,
+        y_train,
+        X_test,
+        y_test,
     )
+
 
     # Provide bilingual CLI output for the generated portfolio artifacts.
     # Gibt eine zweisprachige CLI-Ausgabe für die erzeugten
@@ -362,3 +462,6 @@ if __name__ == "__main__":
 
     print(f"Calibration figure saved to: {calibration_path}")
     print(f"Kalibrierungsgrafik gespeichert unter: {calibration_path}")
+
+    print(f"Threshold trade-off figure saved to: {threshold_path}")
+    print(f"Threshold-Trade-off-Grafik gespeichert unter: {threshold_path}")
