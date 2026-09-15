@@ -4,6 +4,9 @@ import pandas as pd
 
 from credit_risk_platform.data_ingestion import load_raw_dataset
 from credit_risk_platform.evaluation import compare_models_on_holdout
+from credit_risk_platform.explainability import (
+    calculate_permutation_importance,
+)
 from credit_risk_platform.modeling import (
     build_model_pipelines,
     cross_validate_models,
@@ -87,6 +90,7 @@ def build_model_evaluation_report(
     cross_validation: pd.DataFrame,
     holdout: pd.DataFrame,
     thresholds: pd.DataFrame,
+    permutation_importance: pd.DataFrame,
     holdout_size: int,
 ) -> str:
     """
@@ -101,13 +105,19 @@ def build_model_evaluation_report(
     leading_holdout_name = format_model_name(leading_holdout["model"])
 
     # Format the holdout sample size according to English and German conventions.
-    # Formatiert die Holdout-Stichprobengröße nach englischer und deutscher Konvention.
+    # Formatiert die Holdout-Stichprobengröße nach englischer und
+    # deutscher Konvention.
     holdout_size_en = f"{holdout_size:,}"
     holdout_size_de = holdout_size_en.replace(",", ".")
 
     holdout_roc_auc = leading_holdout["roc_auc"]
     holdout_average_precision = leading_holdout["average_precision"]
     holdout_brier_score = leading_holdout["brier_score"]
+
+    # Keep the explainability table compact and derive it from measured results.
+    # Hält die Explainability-Tabelle kompakt und leitet sie aus den
+    # gemessenen Ergebnissen ab.
+    top_importance = permutation_importance.head(10)
 
     return f"""# Credit Risk Model Evaluation Report
 
@@ -214,6 +224,56 @@ untersucht werden, da eine einzelne Kennzahl nicht zeigt, in welchen
 Wahrscheinlichkeitsbereichen die Prognosen von den beobachteten Default-Raten
 abweichen.
 
+## Explainability / Erklärbarkeit — Random Forest
+
+### FACT / FAKT
+
+Permutation Importance measures how much the Random Forest's holdout ROC-AUC
+decreases when the values of one input feature are randomly permuted while the
+other features remain unchanged.
+
+Die Permutation Importance misst, wie stark die Holdout-ROC-AUC des Random
+Forest sinkt, wenn die Werte eines Eingabemerkmals zufällig durchmischt werden,
+während die übrigen Merkmale unverändert bleiben.
+
+The ten highest measured feature importances are:
+
+Die zehn höchsten gemessenen Feature Importances sind:
+
+{dataframe_to_markdown_table(top_importance)}
+
+### INTERPRETATION / INTERPRETATION
+
+Higher permutation importance indicates stronger model dependence on a feature
+for holdout-set discrimination. The measured results show that **PAY_0** has
+the largest permutation importance for the evaluated Random Forest.
+
+Eine höhere Permutation Importance zeigt eine stärkere Modellabhängigkeit von
+einem Merkmal für die Trennschärfe auf dem Holdout-Datensatz. Die gemessenen
+Ergebnisse zeigen, dass **PAY_0** für den untersuchten Random Forest die
+höchste Permutation Importance aufweist.
+
+### LIMITATION / EINSCHRÄNKUNG
+
+Permutation importance describes model dependence and does **not** establish
+causality. Related or correlated features can share or redistribute measured
+importance.
+
+Permutation Importance beschreibt Modellabhängigkeit und weist **keine
+Kausalität** nach. Zusammenhängende oder korrelierte Merkmale können sich die
+gemessene Importance teilen oder diese untereinander verschieben.
+
+The explainability analysis uses the already inspected holdout set as a
+post-hoc analysis of the fixed model. These results should therefore not be
+used to select or remove features and then claim a new unbiased performance
+estimate on the same holdout set.
+
+Die Explainability-Analyse verwendet den bereits betrachteten
+Holdout-Datensatz als nachgelagerte Analyse des festgelegten Modells. Diese
+Ergebnisse sollten daher nicht zur Auswahl oder Entfernung von Features
+verwendet werden, um anschließend auf demselben Holdout-Datensatz eine neue
+unverzerrte Performance-Schätzung zu beanspruchen.
+
 ## Model Evaluation Figures / Grafiken zur Modellbewertung
 
 ### ROC — Discrimination / Trennschärfe
@@ -231,6 +291,10 @@ abweichen.
 ### Threshold Trade-off / Schwellenwert-Trade-off
 
 ![Threshold trade-off](figures/threshold_tradeoff.png)
+
+### Permutation Importance / Feature-Abhängigkeit
+
+![Random Forest Permutation Importance](figures/permutation_importance.png)
 
 ## Methodological Conclusion / Methodisches Fazit
 
@@ -252,7 +316,8 @@ a single classification metric:
 - Precision-Recall performance,
 - probability error,
 - calibration,
-- and threshold behavior.
+- threshold behavior,
+- and model explainability.
 
 Die aktuellen Ergebnisse sprechen unter den drei untersuchten
 Kandidatenmodellen für Random Forest. Die Modellqualität wird aus mehreren
@@ -261,18 +326,19 @@ Perspektiven und nicht anhand einer einzigen Klassifikationsmetrik bewertet:
 - Trennschärfe,
 - Precision-Recall-Leistung,
 - Wahrscheinlichkeitsfehler,
-- Kalibrierung
-- und Schwellenwertverhalten.
+- Kalibrierung,
+- Schwellenwertverhalten
+- und Modellerklärbarkeit.
 
 ### LIMITATION / EINSCHRÄNKUNG
 
 The holdout results have now been inspected and are therefore part of the
 evaluation evidence. They should not subsequently be used for iterative model
-tuning or threshold optimization.
+tuning, feature selection or threshold optimization.
 
 Die Holdout-Ergebnisse wurden inzwischen betrachtet und sind damit Teil der
-Evaluation. Sie sollten anschließend nicht für iterative Modelloptimierung
-oder Threshold-Optimierung verwendet werden.
+Evaluation. Sie sollten anschließend nicht für iterative Modelloptimierung,
+Feature-Selektion oder Threshold-Optimierung verwendet werden.
 
 This portfolio project demonstrates a credit-risk model-development workflow.
 It does not claim that the dataset, model or resulting workflow is
@@ -311,11 +377,21 @@ def generate_model_evaluation_report() -> Path:
         y_test,
     )
 
-    # Analyze thresholds for the current leading candidate without claiming
-    # that any threshold is economically optimal.
-    # Analysiert Schwellenwerte für den aktuell führenden Kandidaten, ohne
-    # einen Schwellenwert als wirtschaftlich optimal zu bezeichnen.
+    # Analyze thresholds without claiming an economically optimal threshold.
+    # Analysiert Schwellenwerte, ohne einen wirtschaftlich optimalen
+    # Schwellenwert zu beanspruchen.
     threshold_results = analyze_thresholds(
+        models["random_forest"],
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+    )
+
+    # Measure post-hoc feature dependence for the selected Random Forest.
+    # Misst nachgelagert die Feature-Abhängigkeit des ausgewählten
+    # Random Forest.
+    importance_results = calculate_permutation_importance(
         models["random_forest"],
         X_train,
         y_train,
@@ -327,6 +403,7 @@ def generate_model_evaluation_report() -> Path:
         cross_validation,
         holdout,
         threshold_results,
+        importance_results,
         holdout_size=len(y_test),
     )
 

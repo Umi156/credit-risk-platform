@@ -10,6 +10,9 @@ from credit_risk_platform.evaluation import (
     calculate_roc_curve,
     evaluate_model,
 )
+from credit_risk_platform.explainability import (
+    calculate_permutation_importance,
+)
 from credit_risk_platform.threshold_analysis import analyze_thresholds
 
 FIGURES_DIR = Path("reports/figures")
@@ -359,7 +362,7 @@ def plot_threshold_tradeoff(
     # Die Grafik zeigt einen Entscheidungs-Trade-off und keinen optimalen
     # Schwellenwert. Für ein Optimum wären reale Business-Kosten erforderlich.
     ax.set_xlabel("PD classification threshold")
-    ax.set_ylabel("Metric value")
+    ax.set_ylabel("Rate — Precision, Recall and False Positive Rate")
     ax.set_ylim(0, 1)
 
     ax.set_title(
@@ -386,6 +389,64 @@ def plot_threshold_tradeoff(
     output_path = FIGURES_DIR / "threshold_tradeoff.png"
     fig.tight_layout()
     fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+
+    return output_path
+
+
+def plot_permutation_importance(
+    importance: pd.DataFrame,
+    top_n: int = 10,
+) -> Path:
+    """
+    Plot the most important features based on permutation importance.
+    Visualisiert die wichtigsten Merkmale anhand der Permutation Importance.
+
+    Error bars represent variation across repeated feature permutations.
+    Fehlerbalken zeigen die Streuung über wiederholte Feature-Permutationen.
+    """
+    top_features = importance.head(top_n).sort_values(
+        "importance_mean",
+        ascending=True,
+    )
+
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # A larger ROC-AUC decrease means that model discrimination depends more
+    # strongly on the corresponding feature.
+    # Ein größerer ROC-AUC-Rückgang bedeutet, dass die Modell-Trennschärfe
+    # stärker von dem entsprechenden Merkmal abhängt.
+    ax.barh(
+        top_features["feature"],
+        top_features["importance_mean"],
+        xerr=top_features["importance_std"],
+        capsize=3,
+    )
+
+    ax.set_title(
+        "Random Forest — Permutation Importance\n"
+        "Larger ROC-AUC decrease indicates stronger model dependence"
+    )
+    ax.set_xlabel("Mean decrease in holdout ROC-AUC")
+    ax.set_ylabel("Feature")
+    ax.grid(axis="x", alpha=0.3)
+
+    # Feature importance describes model dependence, not a causal relationship.
+    # Feature Importance beschreibt Modellabhängigkeit, keine Kausalbeziehung.
+    ax.text(
+        0.99,
+        0.02,
+        "Importance measures model dependence, not causality.",
+        transform=ax.transAxes,
+        horizontalalignment="right",
+        verticalalignment="bottom",
+        fontsize=9,
+    )
+
+    output_path = FIGURES_DIR / "permutation_importance.png"
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
     return output_path
@@ -437,7 +498,7 @@ if __name__ == "__main__":
         y_train,
         X_test,
         y_test,
-    ) 
+    )
 
     threshold_path = plot_threshold_tradeoff(
         models["random_forest"],
@@ -447,6 +508,17 @@ if __name__ == "__main__":
         y_test,
     )
 
+    # Calculate explainability results for the selected Random Forest.
+    # Berechnet Explainability-Ergebnisse für den ausgewählten Random Forest.
+    importance = calculate_permutation_importance(
+        models["random_forest"],
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+    )
+
+    importance_path = plot_permutation_importance(importance)
 
     # Provide bilingual CLI output for the generated portfolio artifacts.
     # Gibt eine zweisprachige CLI-Ausgabe für die erzeugten
@@ -465,3 +537,9 @@ if __name__ == "__main__":
 
     print(f"Threshold trade-off figure saved to: {threshold_path}")
     print(f"Threshold-Trade-off-Grafik gespeichert unter: {threshold_path}")
+
+    print(f"Permutation Importance figure saved to: {importance_path}")
+    print(
+        "Permutation-Importance-Grafik gespeichert unter: "
+        f"{importance_path}"
+    )
