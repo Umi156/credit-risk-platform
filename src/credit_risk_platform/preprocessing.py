@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
 
 TARGET_COLUMN = "default payment next month"
-MODEL_TARGET = "default"
+MODEL_TARGET = "default_flag"
 
 
 def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:

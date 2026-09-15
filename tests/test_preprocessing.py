@@ -40,9 +40,8 @@ def test_target_is_renamed(raw_dataset):
     """
     processed = preprocess_dataset(raw_dataset)
 
-    assert "default" in processed.columns
+    assert "default_flag" in processed.columns
     assert "default payment next month" not in processed.columns
-
 
 def test_education_codes_are_consolidated(raw_dataset):
     """

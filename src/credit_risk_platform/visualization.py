@@ -562,8 +562,8 @@ if __name__ == "__main__":
     raw_dataset = load_raw_dataset()
     model_dataset = preprocess_dataset(raw_dataset)
 
-    # X = predictor features; y = target variable "default".
-    # X = Prädiktor-Merkmale; y = Zielvariable "default".
+    # X = predictor features; y = target variable "default_flag".
+    # X = Prädiktor-Merkmale; y = Zielvariable "default_flag".
     #
     # train = model-development data.
     # test = holdout data used for model evaluation.

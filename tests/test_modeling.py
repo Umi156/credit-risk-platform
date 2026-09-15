@@ -31,9 +31,8 @@ def test_target_is_separated(model_dataset):
     """
     X_train, X_test, _, _ = split_model_data(model_dataset)
 
-    assert "default" not in X_train.columns
-    assert "default" not in X_test.columns
-
+    assert "default_flag" not in X_train.columns
+    assert "default_flag" not in X_test.columns
 
 def test_split_is_reproducible(model_dataset):
     """
@@ -56,7 +55,7 @@ def test_split_is_stratified(model_dataset):
     """
     X_train, X_test, y_train, y_test = split_model_data(model_dataset)
 
-    overall_default_rate = model_dataset["default"].mean()
+    overall_default_rate = model_dataset["default_flag"].mean()
 
     assert abs(y_train.mean() - overall_default_rate) < 0.001
     assert abs(y_test.mean() - overall_default_rate) < 0.001

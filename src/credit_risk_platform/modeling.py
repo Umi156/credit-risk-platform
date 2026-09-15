@@ -11,7 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-TARGET_COLUMN = "default"
+TARGET_COLUMN = "default_flag"
 RANDOM_STATE = 42
 TEST_SIZE = 0.20
 
