@@ -1,5 +1,12 @@
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import (
+    average_precision_score,
+    brier_score_loss,
+    log_loss,
+    roc_auc_score,
+)
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.pipeline import Pipeline
 
@@ -144,6 +151,40 @@ def evaluate_selected_calibration(
         )
 
     return pd.DataFrame(results)
+
+
+def fit_selected_calibrated_model(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+) -> tuple[BaseEstimator, dict[str, float]]:
+    """Fit the selected calibrated model and calculate holdout metrics.
+
+    Trainiert das ausgewählte kalibrierte Modell und berechnet Holdout-Metriken.
+    """
+    model = build_calibrated_models()["isotonic"]
+
+    model.fit(X_train, y_train)
+    probabilities = model.predict_proba(X_test)[:, 1]
+
+    metrics = {
+        "roc_auc": roc_auc_score(y_test, probabilities),
+        "average_precision": average_precision_score(
+            y_test,
+            probabilities,
+        ),
+        "brier_score": brier_score_loss(
+            y_test,
+            probabilities,
+        ),
+        "log_loss": log_loss(
+            y_test,
+            probabilities,
+        ),
+    }
+
+    return model, metrics
 
 
 if __name__ == "__main__":

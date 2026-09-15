@@ -6,6 +6,7 @@ from sklearn.pipeline import Pipeline
 from credit_risk_platform.calibration import (
     build_calibrated_models,
     compare_calibration_methods,
+    fit_selected_calibrated_model,
 )
 
 
@@ -153,3 +154,58 @@ def test_evaluate_selected_calibration_returns_expected_metrics(
     assert results["average_precision"].between(0, 1).all()
     assert results["brier_score"].between(0, 1).all()
     assert (results["log_loss"] >= 0).all()
+
+
+def test_fit_selected_calibrated_model(monkeypatch) -> None:
+    """Test fitting the selected model and calculating evaluation metrics.
+
+    Testet das Training des ausgewählten Modells und die Berechnung der Metriken.
+    """
+    class DummyModel:
+        """Provide deterministic probabilities for the unit test.
+
+        Liefert deterministische Wahrscheinlichkeiten für den Unit Test.
+        """
+
+        def fit(self, X, y):
+            return self
+
+        def predict_proba(self, X):
+            import numpy as np
+
+            probabilities = np.array([0.1, 0.2, 0.8, 0.9])
+
+            return np.column_stack(
+                [1.0 - probabilities, probabilities]
+            )
+
+    dummy_model = DummyModel()
+
+    monkeypatch.setattr(
+        "credit_risk_platform.calibration.build_calibrated_models",
+        lambda: {"isotonic": dummy_model},
+    )
+
+    X_train = pd.DataFrame({"feature": [1, 2, 3, 4]})
+    y_train = pd.Series([0, 0, 1, 1])
+    X_test = pd.DataFrame({"feature": [5, 6, 7, 8]})
+    y_test = pd.Series([0, 0, 1, 1])
+
+    model, metrics = fit_selected_calibrated_model(
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+    )
+
+    assert model is dummy_model
+    assert set(metrics) == {
+        "roc_auc",
+        "average_precision",
+        "brier_score",
+        "log_loss",
+    }
+    assert metrics["roc_auc"] == 1.0
+    assert metrics["average_precision"] == 1.0
+    assert metrics["brier_score"] > 0.0
+    assert metrics["log_loss"] > 0.0

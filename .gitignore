@@ -6,5 +6,7 @@ data/processed/*
 data/raw/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-
 *.egg-info/
+mlruns/
+mlflow.db
+mlruns/
