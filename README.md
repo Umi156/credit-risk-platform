@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
-[![Tests](https://img.shields.io/badge/tests-54%20passed-brightgreen)](#testing-and-quality)
+[![Tests](https://img.shields.io/badge/tests-61%20passed-brightgreen)](#testing-and-quality)
 [![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
 [![CI](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml)
 
@@ -17,7 +17,7 @@
 
 This portfolio project implements a reproducible machine-learning workflow for **credit default risk modeling** using the UCI *Default of Credit Card Clients* dataset.
 
-It goes beyond model training by covering **data validation, cross-validation, probability calibration, decision-threshold analysis, explainability, MLflow experiment tracking, automated reporting, software testing, and continuous integration**.
+It goes beyond model training by covering **data validation, cross-validation, probability calibration, decision-threshold analysis, explainability, MLflow experiment tracking, automated reporting, software testing, PostgreSQL persistence, and continuous integration**.
 
 > [!IMPORTANT]
 > **Portfolio scope:** This project demonstrates credit-risk model-development concepts and software-engineering practices. It does **not** claim regulatory, IRBA, or production compliance.
@@ -33,6 +33,7 @@ It goes beyond model training by covering **data validation, cross-validation, p
 | ⚖️ **Decision Analysis** | Threshold trade-offs, precision, recall and false-positive rate |
 | 🔍 **Explainability** | Permutation feature importance |
 | 🧪 **Experiment Tracking** | MLflow with local SQLite backend |
+| 🗄️ **Data Persistence** | PostgreSQL via `psycopg`, environment-based configuration, bulk `COPY` loading |
 | 🛠️ **Engineering** | Python package structure, pytest, Ruff, Git/GitHub, GitHub Actions |
 | 📄 **Reporting** | Automated model report and diagnostic visualizations |
 
@@ -63,6 +64,9 @@ The calibration method was selected using **training-data cross-validation**, wi
                                  │
                                  ▼
                          Data Validation
+                                 │
+                                 ▼
+                    PostgreSQL Persistence
                                  │
                                  ▼
                           Preprocessing
@@ -104,6 +108,9 @@ The calibration method was selected using **training-data cross-validation**, wi
 
 - Reproducible ingestion of the UCI source dataset
 - Dataset schema and quality validation
+- PostgreSQL persistence of validated source data with `psycopg`
+- Bulk loading with PostgreSQL `COPY` and database constraints
+- Verified Pandas → PostgreSQL → Pandas round-trip integrity
 - Credit-risk preprocessing pipeline
 - Stratified training and holdout split
 - Logistic Regression baseline
@@ -118,7 +125,7 @@ The calibration method was selected using **training-data cross-validation**, wi
 - Automated Markdown model report
 - MLflow experiment tracking with local SQLite backend
 - MLflow model serialization using `skops`
-- Automated test suite with 54 tests
+- Automated test suite with 61 tests
 - Ruff static code-quality checks
 - Git/GitHub version control
 - Continuous integration with GitHub Actions
@@ -248,6 +255,16 @@ Local MLflow databases and generated tracking artifacts are excluded from Git ve
 
 ---
 
+## 🗄️ PostgreSQL Persistence
+
+Validated source data can be persisted in the `validated_credit_data` PostgreSQL table. Connection settings are read from environment variables, so database credentials are not stored in the repository.
+
+The persistence layer uses PostgreSQL `COPY` for bulk loading and enforces a primary key, `NOT NULL` constraints, and a binary check constraint for `default_flag`. Local integration verification confirmed **30,000 rows**, **30,000 unique IDs**, and **6,636 observed defaults**. A Pandas → PostgreSQL → Pandas round trip was also verified with identical shape, columns, and data values.
+
+PostgreSQL integration is currently verified locally. The GitHub Actions workflow remains database-independent and uses mocked database unit tests.
+
+---
+
 ## 📦 Dataset
 
 The project uses the **UCI Machine Learning Repository — Default of Credit Card Clients** dataset.
@@ -298,6 +315,7 @@ This project therefore does **not** claim:
 | Visualization | Matplotlib, Seaborn |
 | Experiment Tracking | MLflow |
 | Tracking Backend | SQLite |
+| Persistent Data Storage | PostgreSQL via `psycopg` |
 | Testing | pytest |
 | Code Quality | Ruff |
 | Version Control | Git, GitHub |
@@ -307,7 +325,6 @@ This project therefore does **not** claim:
 
 The following components are planned extensions and are **not yet represented as completed functionality**:
 
-- PostgreSQL for persistent platform data storage
 - Apache Airflow for workflow orchestration
 - Docker / Docker Compose for reproducible services
 
@@ -330,6 +347,8 @@ credit-risk-platform/
 │   └── figures/
 ├── src/
 │   └── credit_risk_platform/
+│       ├── database.py
+│       └── persistence.py
 ├── tests/
 ├── README.md
 ├── README_DE.md
@@ -353,12 +372,13 @@ The current automated test suite contains **54 tests** covering core components 
 - visualization
 - reporting
 - MLflow experiment tracking
+- PostgreSQL connection and persistence
 
 Current verified quality gates:
 
 ```text
 Local:
-54 passed
+61 passed
 Ruff: All checks passed
 
 GitHub Actions CI:
@@ -402,7 +422,7 @@ A complete containerized environment has not yet been implemented. Docker-based 
 - [x] MLflow experiment tracking
 - [x] Automated tests
 - [x] GitHub Actions CI
-- [ ] PostgreSQL persistence
+- [x] PostgreSQL persistence
 - [ ] Apache Airflow orchestration
 - [ ] Docker Compose environment
 
@@ -412,4 +432,4 @@ A complete containerized environment has not yet been implemented. Docker-based 
 
 This repository is an educational and portfolio implementation inspired by professional credit-risk model-development workflows.
 
-The models, validation procedures, dataset, and software architecture presented here are **not sufficient to establish regulatory compliance, IRBA conformity, or production suitability**.
+The models, validation procedures, dataset, and software architecture presented here are **not sufficient to establish regulatory compliance, IRBA conformity, or production suitabilO

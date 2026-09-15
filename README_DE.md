@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![MLflow](https://img.shields.io/badge/MLflow-Experiment%20Tracking-blue?logo=mlflow&logoColor=white)](https://mlflow.org/)
-[![Tests](https://img.shields.io/badge/tests-54%20passed-brightgreen)](#tests-und-code-qualität)
+[![Tests](https://img.shields.io/badge/tests-61%20passed-brightgreen)](#tests-und-code-qualität)
 [![Code Quality](https://img.shields.io/badge/Ruff-passing-brightgreen)](https://docs.astral.sh/ruff/)
 [![CI](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Umi156/credit-risk-platform/actions/workflows/ci.yml)
 
@@ -17,7 +17,7 @@
 
 Dieses Portfolio-Projekt implementiert einen reproduzierbaren Machine-Learning-Workflow zur **Modellierung von Kreditausfallrisiken** auf Basis des UCI-Datensatzes *Default of Credit Card Clients*.
 
-Das Projekt geht über reines Modelltraining hinaus und umfasst **Datenvalidierung, Cross-Validation, Wahrscheinlichkeitskalibrierung, Schwellenwertanalyse, Explainability, MLflow Experiment Tracking, automatisiertes Reporting, Softwaretests und Continuous Integration**.
+Das Projekt geht über reines Modelltraining hinaus und umfasst **Datenvalidierung, Cross-Validation, Wahrscheinlichkeitskalibrierung, Schwellenwertanalyse, Explainability, MLflow Experiment Tracking, automatisiertes Reporting, Softwaretests, PostgreSQL-Persistenz und Continuous Integration**.
 
 > [!IMPORTANT]
 > **Portfolio-Umfang:** Dieses Projekt demonstriert Konzepte der Kreditrisikomodellentwicklung und Software-Engineering-Praktiken. Es erhebt **keinen Anspruch auf regulatorische Konformität, IRBA-Konformität oder Produktionstauglichkeit**.
@@ -33,6 +33,7 @@ Das Projekt geht über reines Modelltraining hinaus und umfasst **Datenvalidieru
 | ⚖️ **Entscheidungsanalyse** | Threshold-Trade-offs, Precision, Recall und False-Positive-Rate |
 | 🔍 **Explainability** | Permutation Feature Importance |
 | 🧪 **Experiment Tracking** | MLflow mit lokalem SQLite-Backend |
+| 🗄️ **Datenpersistenz** | PostgreSQL über `psycopg`, umgebungsbasierte Konfiguration, Bulk Loading mit `COPY` |
 | 🛠️ **Engineering** | Python-Paketstruktur, pytest, Ruff, Git/GitHub, GitHub Actions |
 | 📄 **Reporting** | Automatisierter Modellbericht und diagnostische Visualisierungen |
 
@@ -63,6 +64,9 @@ Die Kalibrierungsmethode wurde mittels **Cross-Validation auf den Trainingsdaten
                                  │
                                  ▼
                          Data Validation
+                                 │
+                                 ▼
+                    PostgreSQL Persistence
                                  │
                                  ▼
                           Preprocessing
@@ -104,6 +108,9 @@ Die Kalibrierungsmethode wurde mittels **Cross-Validation auf den Trainingsdaten
 
 - Reproduzierbare Datenaufnahme des UCI-Quelldatensatzes
 - Validierung von Datenschema und Datenqualität
+- PostgreSQL-Persistenz validierter Quelldaten mit `psycopg`
+- Bulk Loading mit PostgreSQL `COPY` und Datenbank-Constraints
+- Verifizierte Pandas → PostgreSQL → Pandas Round-Trip-Integrität
 - Preprocessing-Pipeline für Kreditrisikodaten
 - Stratifizierte Aufteilung in Trainings- und Holdout-Daten
 - Logistic-Regression-Baseline
@@ -118,7 +125,7 @@ Die Kalibrierungsmethode wurde mittels **Cross-Validation auf den Trainingsdaten
 - Automatisierter Markdown-Modellbericht
 - MLflow Experiment Tracking mit lokalem SQLite-Backend
 - MLflow-Modellserialisierung mit `skops`
-- Automatisierte Testsuite mit 54 Tests
+- Automatisierte Testsuite mit 61 Tests
 - Statische Code-Qualitätsprüfung mit Ruff
 - Versionskontrolle mit Git/GitHub
 - Continuous Integration mit GitHub Actions
@@ -248,6 +255,16 @@ Lokale MLflow-Datenbanken und generierte Tracking-Artefakte sind von der Git-Ver
 
 ---
 
+## 🗄️ PostgreSQL-Persistenz
+
+Validierte Quelldaten können in der PostgreSQL-Tabelle `validated_credit_data` persistiert werden. Die Verbindungseinstellungen werden aus Umgebungsvariablen gelesen, sodass keine Datenbank-Zugangsdaten im Repository gespeichert werden.
+
+Die Persistenzschicht verwendet PostgreSQL `COPY` für Bulk Loading und erzwingt einen Primary Key, `NOT NULL`-Constraints sowie einen binären Check-Constraint für `default_flag`. Die lokale Integrationsprüfung bestätigte **30.000 Zeilen**, **30.000 eindeutige IDs** und **6.636 beobachtete Defaults**. Zusätzlich wurde ein Pandas → PostgreSQL → Pandas Round Trip mit identischer Shape, Spaltenstruktur und identischen Datenwerten verifiziert.
+
+Die PostgreSQL-Integration ist derzeit lokal verifiziert. Der GitHub-Actions-Workflow bleibt datenbankunabhängig und verwendet gemockte Datenbank-Unit-Tests.
+
+---
+
 ## 📦 Datensatz
 
 Das Projekt verwendet den Datensatz **UCI Machine Learning Repository — Default of Credit Card Clients**.
@@ -298,6 +315,7 @@ Dieses Projekt erhebt daher **keinen Anspruch auf**:
 | Visualisierung | Matplotlib, Seaborn |
 | Experiment Tracking | MLflow |
 | Tracking-Backend | SQLite |
+| Persistente Datenspeicherung | PostgreSQL über `psycopg` |
 | Testing | pytest |
 | Code-Qualität | Ruff |
 | Versionskontrolle | Git, GitHub |
@@ -307,7 +325,6 @@ Dieses Projekt erhebt daher **keinen Anspruch auf**:
 
 Die folgenden Komponenten sind geplante Erweiterungen und **noch nicht als fertiggestellte Funktionalität implementiert**:
 
-- PostgreSQL für persistente Plattform-Datenspeicherung
 - Apache Airflow für Workflow-Orchestrierung
 - Docker / Docker Compose für reproduzierbare Services
 
@@ -330,6 +347,8 @@ credit-risk-platform/
 │   └── figures/
 ├── src/
 │   └── credit_risk_platform/
+│       ├── database.py
+│       └── persistence.py
 ├── tests/
 ├── README.md
 ├── README_DE.md
@@ -353,12 +372,13 @@ Die aktuelle automatisierte Testsuite enthält **54 Tests** für zentrale Kompon
 - Visualization
 - Reporting
 - MLflow Experiment Tracking
+- PostgreSQL-Verbindung und Persistenz
 
 Aktuell verifizierte Quality Gates:
 
 ```text
 Lokal:
-54 passed
+61 passed
 Ruff: All checks passed
 
 GitHub Actions CI:
@@ -402,7 +422,7 @@ Eine vollständig containerisierte Umgebung wurde noch nicht implementiert. Dock
 - [x] MLflow Experiment Tracking
 - [x] Automatisierte Tests
 - [x] GitHub Actions CI
-- [ ] PostgreSQL-Persistenz
+- [x] PostgreSQL-Persistenz
 - [ ] Apache-Airflow-Orchestrierung
 - [ ] Docker-Compose-Umgebung
 
